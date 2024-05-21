@@ -63,7 +63,7 @@ class Users extends BaseController
         }
 
         // If you want to get the validated data.
-        $validData = $this->validator->getValidated();
+       // $validData = $this->validator->getValidated();
 
         // Save the user to the database
         $userModel = new UserModel();
