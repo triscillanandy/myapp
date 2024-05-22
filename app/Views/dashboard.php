@@ -16,8 +16,9 @@
                 <div class="card-content">
                     <div class="card-body shadow">
                       
-                        <div class="card-title">Hello <?= session()->get('firstname') ?></div>
-                        <div class="card-title">email:  <?= session()->get('email') ?></div>
+                      
+                        <div class="card-title">  <h1>Welcome, <?= $firstname ?> <?= $lastname ?></h1>
+        <p>Your email: <?= $email ?></p></div>
                         <a href="<?= base_url('logout')?>">Logout</a>
                        <div class="container">
 
