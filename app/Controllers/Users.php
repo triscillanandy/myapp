@@ -31,11 +31,13 @@ class Users extends BaseController
         if(!$validation) {
             return view('login', ['validation' => $this->validator]);
         } else {
-            $email = $this->request->getPost('email');
-            $password = $this->request->getPost('password');
+            $email = $this->request->getVar('email');
+            $password = $this->request->getVar('password');
             $userModel = new UserModel();
+
             $userInfo = $userModel->where('email', $email)->first();
-            $checkPassword = Hash::check($password, $userInfo['password']);
+
+            $checkPassword = password_verify($password, $userInfo['password']);
             if(!$checkPassword) {
                 session()->setFlashdata('fail', 'Incorrect password');
                 return redirect()->to('login')->withInput();
