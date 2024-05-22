@@ -14,9 +14,6 @@ class UserModel extends Model
     // protected $beforeInsert = ['beforeInsert'];
     // protected $beforeUpdate = ['beforeUpdate'];
 
-
-
-
     // protected function beforeInsert(array $data){
     //   $data = $this->passwordHash($data);
     //   $data['data']['created_at'] = date('Y-m-d H:i:s');

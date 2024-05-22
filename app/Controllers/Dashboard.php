@@ -32,12 +32,14 @@ class Dashboard extends BaseController
 
         // Prepare data for the view
         $data = [
+            'id' => $userInfo['id'],
             'firstname' => $userInfo['firstname'],
             'lastname' => $userInfo['lastname'],
             'email' => $userInfo['email']
         ];
 
-        // Load the view
-        return view('dashboard', $data);
+        echo view('templates/header', $data);
+		echo view('dashboard');
+		echo view('templates/footer');
     }
 }

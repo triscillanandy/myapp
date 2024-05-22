@@ -19,7 +19,7 @@
                       
                         <div class="card-title">  <h1>Welcome, <?= $firstname ?> <?= $lastname ?></h1>
         <p>Your email: <?= $email ?></p></div>
-                        <a href="<?= base_url('logout')?>">Logout</a>
+                      
                        <div class="container">
 
                     </div>

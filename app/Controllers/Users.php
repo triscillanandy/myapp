@@ -76,14 +76,6 @@ class Users extends BaseController
 		return true;
 	}
 
-    public function logout() {
-        $session = session();
-        $session->destroy();
-        
-      
-        return redirect()->to('/login');
-    }
-    
     public function register()
     {
         if (! $this->request->is('post')) {
@@ -130,4 +122,79 @@ class Users extends BaseController
         // Redirect to the homepage or login page
         return redirect()->to('/login');
     }
+
+
+    public function profile($id)
+    {
+        $user = new UserModel();
+        // $id = session()->get('id');
+        $data['user']=  $user->find($id);
+        echo view('templates/header');
+        return view('profile',$data);
+        echo view('templates/footer');
+
+    }
+
+    public function update($id)
+    {
+    $user = new UserModel();
+    $data = [
+        'firstname' => $this->request->getPost("firstname"),
+        'lastname' => $this->request->getPost("lastname"),
+        'email' => $this->request->getPost('email'),
+
+    ];
+
+    $user->update($id, $data);
+    return redirect()->to(base_url("dashboard"))->with("status", " Updated Successfully");
+}
+
+    //     if ($this->request->getMethod() == 'post') {
+    //         $rules = [
+    //             'firstname' => 'required|min_length[3]|max_length[20]',
+    //             'lastname' => 'required|min_length[3]|max_length[20]',
+    //         ];
+
+    //         if ($this->request->getPost('password') != '') {
+    //             $rules['password'] = 'required|min_length[8]|max_length[255]';
+    //             $rules['password_confirm'] = 'matches[password]';
+    //         }
+
+    //         if (!$this->validate($rules)) {
+    //             return view('profile', [
+    //                 'user' => $user,
+    //                 'validation' => $this->validator
+    //             ]);
+    //         } else {
+    //             $newData = [
+    //                 'id' => $id,
+    //                 'firstname' => $this->request->getPost('firstname'),
+    //                 'lastname' => $this->request->getPost('lastname'),
+    //             ];
+
+    //             if ($this->request->getPost('password') != '') {
+    //                 $newData['password'] =password_hash($this->request->getVar('password'), PASSWORD_BCRYPT);
+    //             }
+
+    //             $model->update($id, $newData);
+    //             session()->setFlashdata('success', 'Successfully Updated');
+    //             return redirect()->to('/profile');
+    //         }
+    //     }
+    //     echo view('templates/header');
+    //     return view('profile', [
+    //         'user' => $user
+    //     ]);
+    //     echo view('templates/footer');
+    // }
+	
+    public function logout() {
+        $session = session();
+        $session->destroy();
+        
+      
+        return redirect()->to('/login');
+    }
+    
+	
 }
