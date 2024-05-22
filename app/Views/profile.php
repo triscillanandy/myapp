@@ -34,7 +34,7 @@
             </div>
             <div class="col-12 col-sm-6">
               <div class="form-group">
-               <label for="lastname">Last Name</label>
+               <label for="lastname">Last Name</label> 
                <input type="text" class="form-control" name="lastname" id="lastname" value="<?= $user['lastname'] ?>">
               </div>
             </div>
@@ -59,7 +59,10 @@
             <div class="col-12 col-sm-4">
               <button type="submit" class="btn btn-primary">Update</button>
             </div>
-
+<br>
+<div class="col-12 col-sm-4">
+        <a href="<?= base_url('forgotpassword') ?>" class="btn btn-link">Change ppassword</a>
+    </div>
           </div>
         </form>
       </div>

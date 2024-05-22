@@ -187,6 +187,48 @@ class Users extends BaseController
     //     ]);
     //     echo view('templates/footer');
     // }
+
+    public function forgotpassword()
+{
+    if (! $this->request->is('post')) {
+        return view('forgotpassword'); // Assuming you have a view for changing password
+    }
+     
+    // Define validation rules
+    $rules = [
+        'old_password' => 'required',
+        'new_password' => 'required|min_length[8]|max_length[255]',
+        'confirm_password' => 'required|matches[new_password]',
+    ];
+
+    // Get POST data
+    $data = $this->request->getPost(array_keys($rules));
+
+    // Validate the data
+    if (! $this->validate($rules)) {
+        return view('forgotpassword');
+    }
+
+    // Check if old password matches with the one in the database
+    $userModel = new UserModel();
+    $user = $userModel->where('email', session()->get('email'))->first();
+
+    if (!password_verify($data['old_password'], $user['password'])) {
+        // Old password does not match
+        return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
+    }
+
+    // Update the password
+    $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
+    $userModel->update($user['id'], ['password' => $newPasswordHash]);
+
+    // Set a success message in session data
+    session()->setFlashdata('success', 'Password updated successfully');
+
+    // Redirect to the homepage or profile page
+    return redirect()->to('/dashboard');
+}
+
 	
     public function logout() {
         $session = session();
