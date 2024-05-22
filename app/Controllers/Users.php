@@ -1,43 +1,57 @@
 <?php namespace App\Controllers;
 
 use App\Models\UserModel;
-
+use App\Libraries\Hash;
 class Users extends BaseController
 {
-    protected $helpers = ['form'];
+    //protected $helpers = ['url', 'form'];
 
-
-
-    public function login()
+    public function __construct()
     {
-        if (!$this->request->getMethod() == 'post') {
-            return view('login');
-        }
-
-        $rules = [
-            'email' => 'required|min_length[6]|max_length[50]|valid_email',
-            'password' => 'required|min_length[8]|max_length[255]|validateUser[email,password]',
-        ];
-
-        $errors = [
-            'password' => [
-                'validateUser' => 'Email or Password don\'t match'
-            ]
-        ];
-
-        if (!$this->validate($rules, $errors)) {
-            $data['validation'] = $this->validator;
-            return view('login', $data);
-        }
-
-       // $model = new UserModel();
-       // $user = $model->where('email', $this->request->getVar('email'))->first();
-        //$this->setUserSession($user);
-
-        return redirect()->to('dashboard');
+        helper(['url', 'form']);
     }
-
-
+     
+    public function login() {
+        $validation = $this->validate([
+            'email' => [
+                'rules' => 'required|valid_email|is_not_unique[users.email]',
+                'errors' => [
+                    'required' => "Email Field Required",
+                    'valid_email' => "Not a valid email",
+                    'is_not_unique' => "Email not registered",
+                ]
+            ],
+            'password' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => "Password Field Required"
+                ]
+            ],
+        ]);
+        if(!$validation) {
+            return view('login', ['validation' => $this->validator]);
+        } else {
+            $email = $this->request->getPost('email');
+            $password = $this->request->getPost('password');
+            $userModel = new UserModel();
+            $userInfo = $userModel->where('email', $email)->first();
+            $checkPassword = Hash::check($password, $userInfo['password']);
+            if(!$checkPassword) {
+                session()->setFlashdata('fail', 'Incorrect password');
+                return redirect()->to('login')->withInput();
+            } else {
+                $loggedUserId = $userInfo['id'];
+                $loggedUserFullName = $userInfo['firstname'].' '.$userInfo['lastname'];
+    
+                session()->set('loggedUserId' , $loggedUserId);
+                session()->set('loggedUserFullName' , $loggedUserFullName);
+    
+                session()->setFlashdata('success', 'Login success');
+                return redirect()->to('dashboard')->withInput();
+            }
+        }
+    }
+    
     public function register()
     {
         if (! $this->request->is('post')) {
@@ -72,7 +86,7 @@ class Users extends BaseController
             'firstname' => $this->request->getVar('firstname'),
             'lastname' => $this->request->getVar('lastname'),
             'email' => $this->request->getVar('email'),
-            'password' => $this->request->getVar('password')
+            'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT)
         ];
 
         $userModel->save($newUserData);

@@ -1,9 +1,10 @@
 <h3>Register</h3>
 <hr>
 
-<?= validation_list_errors() ?>
+
+
 <form action="<?= base_url('register')?>" method="post">
-   
+   <?= validation_list_errors() ?>
     <div>
         <label for="firstname">First Name</label>
         <input type="text" name="firstname" id="firstname" value="<?= set_value('firstname') ?>">
