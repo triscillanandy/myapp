@@ -33,10 +33,10 @@
         <div class="alert alert-danger"><?= session()->getFlashdata('success'); ?></div>
         <?php endif ?>
                             <div class="form-group">
-                                <input type="email" placeholder="enter email.." class="form-control" name="email" required>
+                                <input type="email" placeholder="enter email.." class="form-control" name="email"  value="<?= set_value('email') ?>" required>
                             </div>
                             <div class="form-group">
-                                <input type="password" placeholder="enter password.." class="form-control" name="password" required>
+                                <input type="password" placeholder="enter password.." class="form-control" name="password" value="<?= set_value('password') ?>" required>
                             </div>
                             <div class="form-group">
                                 <button class="btn btn-secondary shadow-sm">Login</button>

@@ -1,7 +1,7 @@
 <?php namespace App\Controllers;
 
 use App\Models\UserModel;
-use App\Libraries\Hash;
+
 class Users extends BaseController
 {
     //protected $helpers = ['url', 'form'];
@@ -12,6 +12,8 @@ class Users extends BaseController
     }
      
     public function login() {
+
+        
         $validation = $this->validate([
             'email' => [
                 'rules' => 'required|valid_email|is_not_unique[users.email]',
@@ -31,6 +33,7 @@ class Users extends BaseController
         if(!$validation) {
             return view('login', ['validation' => $this->validator]);
         } else {
+            $session = session();
             $email = $this->request->getVar('email');
             $password = $this->request->getVar('password');
             $userModel = new UserModel();
@@ -42,16 +45,43 @@ class Users extends BaseController
                 session()->setFlashdata('fail', 'Incorrect password');
                 return redirect()->to('login')->withInput();
             } else {
-                $loggedUserId = $userInfo['id'];
-                $loggedUserFullName = $userInfo['firstname'].' '.$userInfo['lastname'];
+
+                
+                
+                // $loggedUserId = $userInfo['id'];
+                // $loggedUserFullName = $userInfo['firstname'].' '.$userInfo['lastname'];
     
-                session()->set('loggedUserId' , $loggedUserId);
-                session()->set('loggedUserFullName' , $loggedUserFullName);
-    
+                // session()->set('loggedUserId' , $loggedUserId);
+                // session()->set('loggedUserFullName' , $loggedUserFullName);
+                $this->setUserSession($userInfo);
                 session()->setFlashdata('success', 'Login success');
                 return redirect()->to('dashboard')->withInput();
             }
         }
+    }
+
+
+    
+	private function setUserSession($userInfo){
+        
+		$data = [
+			'id' => $userInfo['id'],
+			'firstname' => $userInfo['firstname'],
+			'lastname' => $userInfo['lastname'],
+			'email' => $userInfo['email'],
+			'isLoggedIn' => true,
+		];
+
+		session()->set($data);
+		return true;
+	}
+
+    public function logout() {
+        $session = session();
+        $session->destroy();
+        
+      
+        return redirect()->to('/login');
     }
     
     public function register()

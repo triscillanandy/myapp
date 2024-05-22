@@ -2,11 +2,17 @@
 
 namespace App\Controllers;
 
+use App\Models\UserModel;
+
 class Dashboard extends BaseController
 {
     public function index()
-    {
-        $session = session();
-        echo "Hello : ".$session->get('firstname');
+    {  
+  
+		$data = [];
+
+		// echo view('templates/header', $data);
+		// echo view('dashboard');
+        return view('dashboard', $data);
     }
 }
