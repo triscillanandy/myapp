@@ -61,7 +61,7 @@
             </div>
 <br>
 <div class="col-12 col-sm-4">
-        <a href="<?= base_url('forgotpassword') ?>" class="btn btn-link">Change ppassword</a>
+        <a href="<?= base_url('forgotpassword') ?>" class="btn btn-link">Change password</a>
     </div>
           </div>
         </form>

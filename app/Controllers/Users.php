@@ -4,16 +4,15 @@ use App\Models\UserModel;
 
 class Users extends BaseController
 {
+    
     //protected $helpers = ['url', 'form'];
 
     public function __construct()
     {
         helper(['url', 'form']);
     }
-     
-    public function login() {
-
-        
+    public function login()
+    {
         $validation = $this->validate([
             'email' => [
                 'rules' => 'required|valid_email|is_not_unique[users.email]',
@@ -30,36 +29,34 @@ class Users extends BaseController
                 ]
             ],
         ]);
-        if(!$validation) {
+    
+        if (!$validation) {
             return view('login', ['validation' => $this->validator]);
         } else {
-            $session = session();
+           
             $email = $this->request->getVar('email');
             $password = $this->request->getVar('password');
             $userModel = new UserModel();
-
+    
             $userInfo = $userModel->where('email', $email)->first();
-
+    
             $checkPassword = password_verify($password, $userInfo['password']);
-            if(!$checkPassword) {
+            if (!$checkPassword) {
                 session()->setFlashdata('fail', 'Incorrect password');
                 return redirect()->to('login')->withInput();
+            } elseif ($userInfo['status'] != 1) {
+                // If user status is not activated, redirect to login with error message
+                session()->setFlashdata('fail', 'Account not activated. Please check your email for activation link.');
+                return redirect()->to('login')->withInput();
             } else {
-
-                
-                
-                // $loggedUserId = $userInfo['id'];
-                // $loggedUserFullName = $userInfo['firstname'].' '.$userInfo['lastname'];
-    
-                // session()->set('loggedUserId' , $loggedUserId);
-                // session()->set('loggedUserFullName' , $loggedUserFullName);
+                // User is activated, proceed with login
                 $this->setUserSession($userInfo);
                 session()->setFlashdata('success', 'Login success');
                 return redirect()->to('dashboard')->withInput();
             }
         }
     }
-
+    
 
     
 	private function setUserSession($userInfo){
@@ -76,7 +73,53 @@ class Users extends BaseController
 		return true;
 	}
 
-    public function register()
+    // public function register()
+    // {
+    //     if (! $this->request->is('post')) {
+    //         return view('register');
+    //     }
+        
+    //     // Define validation rules
+    //     $rules = [
+    //         'firstname' => 'required|min_length[3]|max_length[20]',
+    //         'lastname' => 'required|min_length[3]|max_length[20]',
+    //         'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
+    //         'password' => 'required|min_length[8]|max_length[255]',
+    //         'password_confirm' => 'matches[password]',
+    //     ];
+
+    //     // Get POST data
+    //     $data = $this->request->getPost(array_keys($rules));
+
+    //    //validate the data
+
+    //     if (! $this->validateData($data, $rules)) {
+    //         return view('register');
+    //     }
+
+    //     // If you want to get the validated data.
+    //    // $validData = $this->validator->getValidated();
+
+    //     // Save the user to the database
+    //     $userModel = new UserModel();
+
+    //     $newUserData = [
+    //         'firstname' => $this->request->getVar('firstname'),
+    //         'lastname' => $this->request->getVar('lastname'),
+    //         'email' => $this->request->getVar('email'),
+    //         'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT)
+    //     ];
+
+    //     $userModel->save($newUserData);
+
+    //     // Set a success message in session data
+    //     $session = session();
+    //     $session->setFlashdata('success', 'Successful Registration');
+
+    //     // Redirect to the homepage or login page
+    //     return redirect()->to('/login');
+    // }
+ public function register()
     {
         if (! $this->request->is('post')) {
             return view('register');
@@ -94,35 +137,107 @@ class Users extends BaseController
         // Get POST data
         $data = $this->request->getPost(array_keys($rules));
 
-       //validate the data
-
+        // Validate the data
         if (! $this->validateData($data, $rules)) {
-            return view('register');
+            return view('register', ['validation' => $this->validator]);
         }
 
-        // If you want to get the validated data.
-       // $validData = $this->validator->getValidated();
+        // Generate simple random code
+        $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $code = substr(str_shuffle($set), 0, 12);
 
-        // Save the user to the database
-        $userModel = new UserModel();
-
+        // Prepare new user data
         $newUserData = [
             'firstname' => $this->request->getVar('firstname'),
             'lastname' => $this->request->getVar('lastname'),
             'email' => $this->request->getVar('email'),
-            'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT)
+            'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+            'code' => $code,
+            'status' => 0, // Initially inactive
         ];
 
+        // Save the user to the database
+        $userModel = new UserModel();
         $userModel->save($newUserData);
+        $userId = $userModel->getInsertID();
+
+        // Send verification email
+        $this->sendVerificationEmail($this->request->getVar('email'), $userId, $code);
 
         // Set a success message in session data
         $session = session();
-        $session->setFlashdata('success', 'Successful Registration');
+        $session->setFlashdata('success', 'Successful Registration. Please check your email to activate your account.');
 
         // Redirect to the homepage or login page
         return redirect()->to('/login');
     }
 
+    private function sendVerificationEmail($recipientEmail, $userId, $code)
+    {
+        $message = "
+            <html>
+            <head>
+                <title>Verification Code</title>
+            </head>
+            <body>
+                <h2>Thank you for Registering.</h2>
+                <p>Please click the link below to activate your account.</p>
+                <h4><a href='".base_url()."users/activate/".$userId."/".$code."'>Activate My Account</a></h4>
+            </body>
+            </html>
+        ";
+
+        $emailService = \Config\Services::email();
+      
+        $config['protocol'] = 'smtp';
+        $config['SMTPHost'] = 'smtp.gmail.com';
+        $config['SMTPUser'] = 'uprint332@gmail.com';
+        $config['SMTPPass'] = 'vhklocvwhgyhtydk';
+        $config['SMTPPort'] = 465;
+        $config['mailType'] = 'html'; // Set email format to HTML
+        $config['charset']  = 'utf-8'; // Set charset
+        $config['wordWrap'] = true; 
+
+       
+        $emailService->initialize($config);
+        
+        $emailService->setFrom('uprint332@gmail.com', 'maria');
+        $emailService->setTo($recipientEmail);
+        $emailService->setSubject('Signup Verification Email');
+        $emailService->setMessage($message);
+        
+        
+        if ($emailService->send()) {
+            session()->setFlashdata('message', 'Activation code sent to email');
+        } else {
+            $debugMessage = $emailService->printDebugger(['headers']);
+            log_message('error', $debugMessage);
+            session()->setFlashdata('message', 'Failed to send activation email: ' . $debugMessage);
+        }
+    }
+
+    public function activate($id, $code)
+    {
+        $userModel = new UserModel();
+        $user = $userModel->find($id);
+
+        // If code matches
+        if ($user && $user['code'] == $code) {
+            // Update user status
+            $data['status'] = 1;
+            $data['code'] = null;
+
+            if ($userModel->update($id, $data)) {
+                session()->setFlashdata('success', 'User activated successfully');
+            } else {
+                session()->setFlashdata('error', 'Something went wrong in activating account');
+            }
+        } else {
+            session()->setFlashdata('error', 'Cannot activate account. Code did not match');
+        }
+
+        return redirect()->to('/login');
+    }
 
     public function profile($id)
     {
@@ -187,56 +302,65 @@ class Users extends BaseController
     //     ]);
     //     echo view('templates/footer');
     // }
-
     public function forgotpassword()
-{
-    if (! $this->request->is('post')) {
-        return view('forgotpassword'); // Assuming you have a view for changing password
-    }
-     
-    // Define validation rules
-    $rules = [
-        'old_password' => 'required',
-        'new_password' => 'required|min_length[8]|max_length[255]',
-        'confirm_password' => 'required|matches[new_password]',
-    ];
-
-    // Get POST data
-    $data = $this->request->getPost(array_keys($rules));
-
-    // Validate the data
-    if (! $this->validate($rules)) {
+    {
+        if (! $this->request->is('post')) {
+         
+           // return  view('templates/header');
+            return view('forgotpassword');
+            //return view('templates/footer'); // Assuming you have a view for changing password
+        }
+         
+        // Define validation rules
+        $rules = [
+            'old_password' => 'required',
+            'new_password' => 'required|min_length[8]|max_length[255]',
+            'confirm_password' => 'required|matches[new_password]',
+        ];
+    
+        // Get POST data
+        $data = $this->request->getPost(array_keys($rules));
+    
+        // Validate the data
+        if (! $this->validate($rules)) {
+        
+            return view('forgotpassword');
+         
+        }
+    
+        // Check if old password matches with the one in the database
+        $userModel = new UserModel();
+        $user = $userModel->where('email', session()->get('email'))->first();
+    
+        if (!password_verify($data['old_password'], $user['password'])) {
+            // Old password does not match
+            return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
+        }
+    
+        // Update the password
+        $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
+        $userModel->update($user['id'], ['password' => $newPasswordHash]);
+    
+        // Set a success message in session data
+        session()->setFlashdata('success', 'Password updated successfully');
+    
+        // Return the view with the success message
         return view('forgotpassword');
+        
     }
-
-    // Check if old password matches with the one in the database
-    $userModel = new UserModel();
-    $user = $userModel->where('email', session()->get('email'))->first();
-
-    if (!password_verify($data['old_password'], $user['password'])) {
-        // Old password does not match
-        return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
-    }
-
-    // Update the password
-    $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
-    $userModel->update($user['id'], ['password' => $newPasswordHash]);
-
-    // Set a success message in session data
-    session()->setFlashdata('success', 'Password updated successfully');
-
-    // Redirect to the homepage or profile page
-    return redirect()->to('/dashboard');
-}
+    
 
 	
-    public function logout() {
-        $session = session();
-        $session->destroy();
+    // public function logout() {
+    //     $session = session();
+    //     $session->destroy();
         
       
-        return redirect()->to('/login');
-    }
+    //    return redirect()->to('/login');
+    
     
 	
 }
+
+
+

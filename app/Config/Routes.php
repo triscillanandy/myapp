@@ -15,3 +15,5 @@ $routes->post('update/(:num)', 'Users::update/$1');
 $routes->match(['get','post'],'forgotpassword', 'Users::forgotpassword');
 $routes->get('dashboard', 'Dashboard::index');
 $routes->get('logout', 'Users::logout');
+$routes->get('users/activate/(:num)/(:any)', 'Users::activate/$1/$2');
+$routes->match(['get','post'],'email', 'Email::index');
