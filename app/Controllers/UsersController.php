@@ -36,7 +36,7 @@ public function login()
     ]);
 
     if (!$validation) {
-        // If validation fails, respond with error messages
+    //     // If validation fails, respond with error messages
         $response = [
             
             'message' => $this->validator->getErrors()
@@ -49,20 +49,26 @@ public function login()
     $userModel = new UserModel();
 
     $userInfo = $userModel->where('email', $email)->first();
-
     if (!$userInfo) {
         // If user not found, respond with error message
         return $this->fail('Email not registered');
     }
-
+    
     $checkPassword = password_verify($password, $userInfo['password']);
+    
     if (!$checkPassword) {
         // If password is incorrect, respond with error message
         return $this->fail('Incorrect password');
-    } elseif ($userInfo['status'] != 1) {
+    }
+    
+    if ($userInfo['status'] != 0) {
         // If user status is not activated, respond with error message
         return $this->fail('Account not activated. Please check your email for activation link.');
     }
+    
+    // User is authenticated and activated, proceed with login
+    // Respond with success message
+    return $this->respondCreated(['message' => 'Login success']);
 
     // User is authenticated and activated, proceed with login
     // Here, you can set any necessary session data or generate tokens if needed
@@ -70,7 +76,7 @@ public function login()
     // $this->setUserSession($userInfo);
     
     // Respond with success message
-    return $this->respondCreated(['message' => 'Login success']);
+   
 }
     
 
@@ -90,69 +96,156 @@ public function login()
 	// }
 
     
- use ResponseTrait;
- public function register()
-    {
-        // if (! $this->request->is('post')) {
+//  use ResponseTrait;
+//  public function register()
+//     {
+//         // if (! $this->request->is('post')) {
        
         
-        // Define validation rules
-        $rules = $this->validate([
-            'firstname' => 'required|min_length[3]|max_length[20]',
-            'lastname' => 'required|min_length[3]|max_length[20]',
-            'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
-            'password' => 'required|min_length[8]|max_length[255]',
-            'password_confirm' => 'matches[password]',
-        ]);
+//         // Define validation rules
+//         $rules = [
+//             'firstname' => 'required|min_length[3]|max_length[20]',
+//             'lastname' => 'required|min_length[3]|max_length[20]',
+//             'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
+//             'password' => 'required|min_length[8]|max_length[255]',
+//             'password_confirm' => 'matches[password]',
+//         ];
 
+//         $data = $this->request->getPost(array_keys($rules));
        
+//         if (! $this->validateData($data, $rules)) {
+//             $response = [
+//                 'message' => $this->validator->getErrors()
+//         ];
+//             }
+    
+//         // // Validate the data
+//         // if (!$rules) {
+//         //     $response = [
+//         //         'message' => $this->validator->getErrors()
+//         // ];
+           
+        
+//         //}
 
-        // Validate the data
-        if (!$rules) {
+//         // Generate simple random code
+//         $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+//         $code = substr(str_shuffle($set), 0, 12);
+
+//         // Prepare new user data
+//         $newUserData = [
+//             'firstname' => $this->request->getVar('firstname'),
+//             'lastname' => $this->request->getVar('lastname'),
+//             'email' => $this->request->getVar('email'),
+//             'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+//             'code' => $code,
+//             'status' => 0, // Initially inactive
+//         ];
+
+//         // Save the user to the database
+//         $userModel = new UserModel();
+//         $userModel->save($newUserData);
+//         $userId = $userModel->getInsertID();
+
+//         // Send verification email
+//         $this->sendVerificationEmail($this->request->getVar('email'), $userId, $code);
+//        // return $this->respondCreated('success', 'Successful Registration. Please check your email to activate your account.');
+//         $response = [
+            
+//             'message' => 'Successful Registration. Please check your email to activate your account.'
+//     ];
+//         return $this->respondCreated($response);
+    
+    
+//         // // Set a success message in session data
+//         // $session = session();
+//         // // $session->setFlashdata();
+
+//         // // Redirect to the homepage or login page
+//         // return redirect()->to('/login');
+//     }
+
+
+
+
+
+use ResponseTrait;
+
+    public function register()
+    {   $model = new UserModel();
+        $rules = [
+            'firstname' => [
+                'rules' => 'required|min_length[3]|max_length[20]',
+                'errors' => [
+                    'required' => 'First name is required.',
+                    'min_length' => 'First name must be at least 3 characters long.',
+                    'max_length' => 'First name cannot exceed 20 characters.'
+                ]
+            ],
+            'lastname' => [
+                'rules' => 'required|min_length[3]|max_length[20]',
+                'errors' => [
+                    'required' => 'Last name is required.',
+                    'min_length' => 'Last name must be at least 3 characters long.',
+                    'max_length' => 'Last name cannot exceed 20 characters.'
+                ]
+            ],
+            'email' => [
+                'rules' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
+                'errors' => [
+                    'required' => 'Email is required.',
+                    'min_length' => 'Email must be at least 6 characters long.',
+                    'max_length' => 'Email cannot exceed 50 characters.',
+                    'valid_email' => 'Please provide a valid email address.',
+                    'is_unique' => 'Email is already registered.'
+                ]
+            ],
+            'password' => [
+                'rules' => 'required|min_length[8]|max_length[255]',
+                'errors' => [
+                    'required' => 'Password is required.',
+                    'min_length' => 'Password must be at least 8 characters long.',
+                    'max_length' => 'Password cannot exceed 255 characters.'
+                ]
+            ],
+            'password_confirm' => [
+                'label' => 'confirm password',
+                'rules' => 'matches[password]',
+                'errors' => [
+                    'matches' => 'Passwords do not match.'
+                ]
+            ]
+        ];
+        if ($this->validate($rules)) {
+            $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $code = substr(str_shuffle($set), 0, 12);
+
+            $newUserData = [
+                'firstname' => $this->request->getVar('firstname'),
+                'lastname' => $this->request->getVar('lastname'),
+                'email' => $this->request->getVar('email'),
+                'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
+                'code' => $code,
+                'status' => 0, // Initially inactive
+            ];
+
+           
+            $model->save($newUserData);
+            $userId = $model->getInsertID();
+
+            $this->sendVerificationEmail($this->request->getVar('email'), $userId, $code);
+
+            return $this->respond(['message' => 'Successful Registration. Please check your email to activate your account.'], 200);
+        } else {
             $response = [
-            
-                'message' => $this->validator->getErrors()
-        ];
-            
+                'errors' => $this->validator->getErrors(),
+                'message' => 'Invalid Inputs'
+            ];
+            return $this->fail($response, 409);
         }
-
-        // Generate simple random code
-        $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $code = substr(str_shuffle($set), 0, 12);
-
-        // Prepare new user data
-        $newUserData = [
-            'firstname' => $this->request->getVar('firstname'),
-            'lastname' => $this->request->getVar('lastname'),
-            'email' => $this->request->getVar('email'),
-            'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
-            'code' => $code,
-            'status' => 0, // Initially inactive
-        ];
-
-        // Save the user to the database
-        $userModel = new UserModel();
-        $userModel->save($newUserData);
-        $userId = $userModel->getInsertID();
-
-        // Send verification email
-        $this->sendVerificationEmail($this->request->getVar('email'), $userId, $code);
-       // return $this->respondCreated('success', 'Successful Registration. Please check your email to activate your account.');
-        $response = [
-            
-            'message' => 'Successful Registration. Please check your email to activate your account.'
-    ];
-        return $this->respondCreated($response);
-    
-    
-        // // Set a success message in session data
-        // $session = session();
-        // // $session->setFlashdata();
-
-        // // Redirect to the homepage or login page
-        // return redirect()->to('/login');
     }
 
+    
     private function sendVerificationEmail($recipientEmail, $userId, $code)
     {
         $message = "
