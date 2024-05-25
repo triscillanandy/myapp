@@ -1,7 +1,7 @@
 <?php namespace App\Controllers;
 
 use App\Models\UserModel;
-
+use \Firebase\JWT\JWT;
 
 use CodeIgniter\API\ResponseTrait;
 class UsersController extends BaseController
@@ -10,74 +10,93 @@ class UsersController extends BaseController
 
     
     //protected $helpers = ['url', 'form'];
-
+  
     public function __construct()
     {
         helper(['url', 'form']);
     }
    
-public function login()
-{
-    $validation = $this->validate([
-        'email' => [
-            'rules' => 'required|valid_email|is_not_unique[users.email]',
-            'errors' => [
-                'required' => "Email Field Required",
-                'valid_email' => "Not a valid email",
-                'is_not_unique' => "Email not registered",
-            ]
-        ],
-        'password' => [
-            'rules' => 'required',
-            'errors' => [
-                'required' => "Password Field Required"
-            ]
-        ],
-    ]);
-
-    if (!$validation) {
-    //     // If validation fails, respond with error messages
-        $response = [
+    public function cuth()
+    {
+        $users = new UserModel();
+        return $this->respond(['users' => $users->findAll()], 200);
+    }
+    public function login()
+    {
+        $validation = $this->validate([
+            'email' => [
+                'rules' => 'required|valid_email|is_not_unique[users.email]',
+                'errors' => [
+                    'required' => "Email Field Required",
+                    'valid_email' => "Not a valid email",
+                    'is_not_unique' => "Email not registered",
+                ]
+            ],
+            'password' => [
+                'rules' => 'required',
+                'errors' => [
+                    'required' => "Password Field Required"
+                ]
+            ],
+        ]);
+    
+        if (!$validation) {
+            // If validation fails, respond with error messages
+            $response = [
+                'message' => $this->validator->getErrors()
+            ];
+            return $this->respondCreated($response);
+        }
+    
+        $email = $this->request->getVar('email');
+        $password = $this->request->getVar('password');
+        $userModel = new UserModel();
+    
+        $userInfo = $userModel->where('email', $email)->first();
+        if (!$userInfo) {
+            // If user not found, respond with error message
+            return $this->fail('Email not registered');
+        }
+        
+        $checkPassword = password_verify($password, $userInfo['password']);
+        
+        if (!$checkPassword) {
+            // If password is incorrect, respond with error message
+            return $this->fail('Incorrect password');
+        }
+    
+        if ($userInfo['status'] == 0) {
+            // If user status is not activated, respond with error message
+            return $this->fail('Account not activated. Please check your email for activation link.');
+        }
+    
+        if ($userInfo['status'] == 1) {
+            // Generate JWT
+            $key = getenv('JWT_SECRET');
+            $iat = time(); // current timestamp value
+            $exp = $iat + 3600; // token expires in 1 hour
+    
+            $payload = [
+                'iss' => 'your-issuer', // Issuer of the token
+                'aud' => 'your-audience', // Audience of the token
+                'sub' => $userInfo['id'], // Subject of the token (usually the user ID)
+                'iat' => $iat, // Issued at: time when the token was generated
+                'exp' => $exp, // Expiration time
+                'email' => $userInfo['email']
+            ];
+    
+            $token = JWT::encode($payload, $key, 'HS256');
             
-            'message' => $this->validator->getErrors()
-    ];
-        return $this->respondCreated($response);
+            // Respond with the token
+            return $this->respondCreated([
+                'message' => 'Login successful',
+                'token' => $token
+            ]);
+        }
+    
+        // Handle any other status cases if necessary
+        return $this->fail('Unable to login due to an unknown status.');
     }
-
-    $email = $this->request->getVar('email');
-    $password = $this->request->getVar('password');
-    $userModel = new UserModel();
-
-    $userInfo = $userModel->where('email', $email)->first();
-    if (!$userInfo) {
-        // If user not found, respond with error message
-        return $this->fail('Email not registered');
-    }
-    
-    $checkPassword = password_verify($password, $userInfo['password']);
-    
-    if (!$checkPassword) {
-        // If password is incorrect, respond with error message
-        return $this->fail('Incorrect password');
-    }
-    
-    if ($userInfo['status'] != 0) {
-        // If user status is not activated, respond with error message
-        return $this->fail('Account not activated. Please check your email for activation link.');
-    }
-    
-    // User is authenticated and activated, proceed with login
-    // Respond with success message
-    return $this->respondCreated(['message' => 'Login success']);
-
-    // User is authenticated and activated, proceed with login
-    // Here, you can set any necessary session data or generate tokens if needed
-    // For example:
-    // $this->setUserSession($userInfo);
-    
-    // Respond with success message
-   
-}
     
 
     

@@ -19,7 +19,10 @@ use CodeIgniter\Router\RouteCollection;
 // $routes->get('users/activate/(:num)/(:any)', 'Users::activate/$1/$2');
 // $routes->match(['get','post'],'email', 'Email::index');
 
+// app/Config/Routes.php
 
+// $routes->post('/jwt', 'Cuth::index');
+// $routes->get('/jwt', 'Cuth::index');
 $routes->get('/register', 'UsersController::register');
 $routes->post('/register', 'UsersController::register');
 $routes->get('login', 'UsersController::login');
@@ -31,3 +34,4 @@ $routes->match(['get','post'],'forgotpassword', 'UsersController::forgotpassword
 $routes->get('dashboard', 'Dashboard::index');
 $routes->get('logout', 'UsersController::logout');
 $routes->get('users/activate/(:num)/(:any)', 'UsersController::activate/$1/$2');
+$routes->get("users", "UsersController::cuth");

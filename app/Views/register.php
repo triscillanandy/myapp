@@ -17,6 +17,7 @@
                     <div class="card-body shadow">
                         <h3>Register</h3>
                         <hr>
+                        <?= validation_list_errors() ?>
                         <?php if (isset($_SESSION['success'])) { ?>
                             <div class="alert alert-success" role="alert">
                                 <?php echo $_SESSION['success'];
@@ -24,9 +25,10 @@
                                 ?>
                             </div>
                         <?php } ?>
+                        
                         <form action="<?= base_url('register') ?>" method="post">
                             <?= csrf_field(); ?>
-                            <?= validation_list_errors() ?>
+                     
                             <div class="form-group">
                                 <label for="firstname">First Name</label>
                                 <input type="text" class="form-control" name="firstname" id="firstname" value="<?= set_value('firstname') ?>" required>

@@ -11,6 +11,8 @@ class Users extends BaseController
     {
         helper(['url', 'form']);
     }
+
+    
     public function login()
     {
         $validation = $this->validate([
@@ -139,7 +141,7 @@ class Users extends BaseController
 
         // Validate the data
         if (! $this->validateData($data, $rules)) {
-            return view('register', ['validation' => $this->validator]);
+            return view('register');
         }
 
         // Generate simple random code
