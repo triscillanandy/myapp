@@ -35,6 +35,10 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'authFilter' => \App\Filters\AuthFilter::class,
+        'auth' => \App\Filters\Auth::class,
+		'noauth' => \App\Filters\Noauth::class,
+		
+
         
     ];
 

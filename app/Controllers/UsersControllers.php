@@ -369,11 +369,19 @@ public function update($id)
 {
     $userModel = new UserModel();
 
+    // Find the user by ID
+    $user = $userModel->find($id);
+
+    // Check if user exists
+    if (!$user) {
+        return $this->failNotFound('User not found');
+    }
+
     // Get data from the request
     $data = [
-        'firstname' => $this->request->getPost("firstname"),
-        'lastname' => $this->request->getPost("lastname"),
-        'email' => $this->request->getPost('email'),
+        'firstname' => $this->request->getVar("firstname"),
+        'lastname' => $this->request->getVar("lastname") ,
+        'email' => $this->request->getVar('email') 
     ];
 
     // Update user data
@@ -387,54 +395,102 @@ public function update($id)
         // If update fails, respond with an error message
         return $this->fail('Failed to update user data');
     }
-
 }
-    public function forgotpassword()
-    {
-        if (! $this->request->is('post')) {
+
+    // public function forgotpassword()
+    // {
+    //     if (! $this->request->is('post')) {
          
-           // return  view('templates/header');
-            return view('forgotpassword');
-            //return view('templates/footer'); // Assuming you have a view for changing password
-        }
+    //        // return  view('templates/header');
+    //         return view('forgotpassword');
+    //         //return view('templates/footer'); // Assuming you have a view for changing password
+    //     }
          
-        // Define validation rules
-        $rules = [
-            'old_password' => 'required',
-            'new_password' => 'required|min_length[8]|max_length[255]',
-            'confirm_password' => 'required|matches[new_password]',
-        ];
+    //     // Define validation rules
+    //     $rules = [
+    //         'old_password' => 'required',
+    //         'new_password' => 'required|min_length[8]|max_length[255]',
+    //         'confirm_password' => 'required|matches[new_password]',
+    //     ];
     
-        // Get POST data
-        $data = $this->request->getPost(array_keys($rules));
+    //     // Get POST data
+    //     $data = $this->request->getPost(array_keys($rules));
     
-        // Validate the data
-        if (! $this->validate($rules)) {
+    //     // Validate the data
+    //     if (! $this->validate($rules)) {
         
-            return view('forgotpassword');
+    //         return view('forgotpassword');
          
-        }
+    //     }
     
-        // Check if old password matches with the one in the database
-        $userModel = new UserModel();
-        $user = $userModel->where('email', session()->get('email'))->first();
+    //     // Check if old password matches with the one in the database
+    //     $userModel = new UserModel();
+    //     $user = $userModel->where('email', session()->get('email'))->first();
     
-        if (!password_verify($data['old_password'], $user['password'])) {
-            // Old password does not match
-            return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
-        }
+    //     if (!password_verify($data['old_password'], $user['password'])) {
+    //         // Old password does not match
+    //         return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
+    //     }
     
-        // Update the password
-        $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
-        $userModel->update($user['id'], ['password' => $newPasswordHash]);
+    //     // Update the password
+    //     $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
+    //     $userModel->update($user['id'], ['password' => $newPasswordHash]);
     
-        // Set a success message in session data
-        session()->setFlashdata('success', 'Password updated successfully');
+    //     // Set a success message in session data
+    //     session()->setFlashdata('success', 'Password updated successfully');
     
-        // Return the view with the success message
-        return view('forgotpassword');
+    //     // Return the view with the success message
+    //     return view('forgotpassword');
         
+    // }
+
+
+    public function forgotpassword($id)
+{
+    // Get the user by ID
+    $userModel = new UserModel();
+    $user = $userModel->find($id);
+
+    // Check if user exists
+    if (!$user) {
+        return $this->failNotFound('User not found');
     }
+
+    // Define validation rules
+    $rules = [
+        'old_password' => 'required',
+        'new_password' => 'required|min_length[8]|max_length[255]',
+        'confirm_password' => 'required|matches[new_password]',
+    ];
+
+    // Get POST data
+    $data = $this->request->getPost(array_keys($rules));
+
+    // Validate the data
+    if (!$this->validate($rules)) {
+        // If validation fails, return validation errors
+        return $this->failValidationErrors($this->validator->getErrors());
+    }
+
+    // Check if old password matches with the one in the database
+    if (!password_verify($data['old_password'], $user['password'])) {
+        // If old password does not match, return error
+        return $this->fail('Old password is incorrect', 401);
+    }
+
+    // Update the password
+    $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
+    $result = $userModel->update($id, ['password' => $newPasswordHash]);
+
+    if (!$result) {
+        // If password update fails, return error response
+        return $this->fail('Failed to update password');
+    }
+
+    // Password updated successfully, return success response
+    return $this->respondUpdated(['message' => 'Password updated successfully']);
+}
+
     
 
 	

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>login</title>
+    <title>Login</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
@@ -15,13 +15,24 @@
             <div class="card">
                 <div class="card-content">
                     <div class="card-body shadow">
-                      
-                      
-                        <div class="card-title">  <h1>Welcome, <?= $firstname ?> <?= $lastname ?></h1>
-        <p>Your email: <?= $email ?></p></div>
-                      
-                       <div class="container">
+                        <div class="card-title">
+                          
+                                <?php 
+                                $user = null;
+                                if (session()->has('logged_user')) {
+                                    $user = session()->get('logged_user');
+                                } elseif (session()->has('google_user')) {
+                                    $user = session()->get('google_user');
+                                }
+                                ?>
+                                <h1>Welcome, <?= $user['firstname'] ?> <?= $user['lastname'] ?></h1>
+                       
+                           
 
+                        </div>
+                        <div class="container">
+                            <!-- Additional content can go here -->
+                        </div>
                     </div>
                 </div>
             </div>

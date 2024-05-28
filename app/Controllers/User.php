@@ -6,15 +6,13 @@ class Users extends BaseController
 {
     
     //protected $helpers = ['url', 'form'];
-    public $userModel = NULL;
+    private $userModel = NULL;
     private $googleClient = NULL;
-    public $session;
 
-    function __construct(){
+    public function __construct()
+    {
         helper(['url', 'form']);
         $this->userModel = new UserModel();
-        $this->session = session();
-        
         $this->googleClient = new \Google\Client();
         $this->googleClient->setClientId("47846670195-a1g31504etm2lflsnga14ohft9ib98rf.apps.googleusercontent.com");
         $this->googleClient->setClientSecret("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");
@@ -22,18 +20,22 @@ class Users extends BaseController
         $this->googleClient->addScope("email");
         $this->googleClient->addScope("profile");
     }
+ 
+    
+
+    
 
     public function index()
     {
-        if ($this->session->get("logged_user") || $this->session->get("google_user")) {
+        if (session()->get("LoggedUserData")) {
             session()->setFlashdata("Error", "You have Already Logged In");
-            // User is already logged in, redirect to dashboard or profile page
-            return redirect()->to(base_url("/dashboard"));
+            return redirect()->to(base_url("/profile"));
         }
-
-        $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"><img src="'.base_url('assets/uploads/google.png').'" alt="Login With Google" width="100%"></a>';
+        $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'" ><img src="'.base_url('assests/uploads/google.png').'" alt="Login With Google" width="100%"></a>';
         return view('login', $data);
     }
+
+    
 
     public function login()
     {
@@ -57,6 +59,7 @@ class Users extends BaseController
         if (!$validation) {
             return view('login', ['validation' => $this->validator]);
         } else {
+           
             $email = $this->request->getVar('email');
             $password = $this->request->getVar('password');
             $userModel = new UserModel();
@@ -68,30 +71,34 @@ class Users extends BaseController
                 session()->setFlashdata('fail', 'Incorrect password');
                 return redirect()->to('login')->withInput();
             } elseif ($userInfo['status'] != 1) {
+                // If user status is not activated, redirect to login with error message
                 session()->setFlashdata('fail', 'Account not activated. Please check your email for activation link.');
                 return redirect()->to('login')->withInput();
             } else {
-                
-                session()->set('logged_user', $userInfo);
+                // User is activated, proceed with login
+                $this->setUserSession($userInfo);
                 session()->setFlashdata('success', 'Login success');
-                return redirect()->to('/dashboard')->withInput();
+                return redirect()->to('dashboard')->withInput();
             }
         }
     }
+    
 
-    // private function setUserSession($userInfo)
-    // {
-    //     $data = [
-    //         'id' => $userInfo['id'],
-    //         'firstname' => $userInfo['firstname'],
-    //         'lastname' => $userInfo['lastname'],
-    //         'email' => $userInfo['email'],
-    //         'isLoggedIn' => true,
-    //     ];
+    
+	private function setUserSession($userInfo){
+        
+		$data = [
+			'id' => $userInfo['id'],
+			'firstname' => $userInfo['firstname'],
+			'lastname' => $userInfo['lastname'],
+			'email' => $userInfo['email'],
+			'isLoggedIn' => true,
+		];
 
-    //     session()->set($data);
-    //     return true;
-    // }
+		session()->set($data);
+		return true;
+	}
+
 
     public function loginWithGoogle()
     {
@@ -107,48 +114,36 @@ class Users extends BaseController
 
                 $userdata = [];
                 if ($this->userModel->isAlreadyRegister($data['email'])) {
+                    // User Already Registered and wants to Login Again
                     $userdata = [
-                        'firstname' => $data['givenName'],
-                        'lastname' => $data['familyName'],
+                     
                         'email' => $data['email'],
                         'profile_img' => $data['picture'],
                         'updated_at' => $currentDateTime
                     ];
                     $this->userModel->updateUserData($userdata, $data['email']);
                 } else {
+                    // New User wants to Login
                     $userdata = [
-                        'firstname' => $data['givenName'],
-                        'lastname' => $data['familyName'],
+                      
                         'email' => $data['email'],
                         'profile_img' => $data['picture'],
                         'created_at' => $currentDateTime
                     ];
                     $this->userModel->insertUserData($userdata);
                 }
-                session()->set("google_user", $userdata);
-                return redirect()->to(base_url("/dashboard"));
+                session()->set("LoggedUserData", $userdata);
             } else {
                 session()->setFlashdata("Error", "Something went wrong");
                 return redirect()->to(base_url());
             }
+            // Successful Login
+            return redirect()->to(base_url("/profile"));
         } else {
             session()->setFlashdata("Error", "Something went wrong");
             return redirect()->to(base_url());
         }
     }
-
-    
-    public function logout()
-    {
-        // Remove session for logged_user and google_user
-        session()->remove('logged_user');
-        session()->remove('google_user');
-        
-        // Redirect to the login page after logout
-        return redirect()->to(base_url());
-    }
-
-
     // public function register()
     // {
     //     if (! $this->request->is('post')) {
@@ -326,78 +321,7 @@ class Users extends BaseController
 
     // }
 
-    public function dashboard()
-    {
-        if (!$this->session->has("logged_user") && !$this->session->has("google_user")) {
-            // Neither session exists, indicating user is not logged in
-            $this->session->setFlashdata("Error", "You have Logged Out, Please Login Again.");
-            return redirect()->to(base_url());
-        }
-        
-        // At least one session exists, so user is considered logged in
-        echo view('templates/header');
-
-        // Load dashboard view
-        echo view('dashboard');
-    
-        // Load footer view
-        echo view('templates/footer');
-    }
-    
-   
-    public function profile() {
-        // Check for session variables to ensure user is logged in
-
-    
-        $data = [];
-        helper(['form']);
-        $model = new UserModel();
-    
-        // Determine which session type is being used
-       
-        if ($this->request->getMethod() == 'post') {
-            // Validation rules
-            $rules = [
-                'firstname' => 'required|min_length[3]|max_length[20]',
-                'lastname' => 'required|min_length[3]|max_length[20]',
-                'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
-            ];
-    
-            // Validate input data
-            if (! $this->validate($rules)) {
-                // If validation fails, store validation errors in $data['validation']
-                $data['validation'] = $this->validator;
-            } else {
-                // If validation passes, prepare data for update
-                $newData = [
-                  
-                    'firstname' => $this->request->getPost('firstname'),
-                    'lastname' => $this->request->getPost('lastname'),
-                    'email' => $this->request->getPost('email'),
-                ];
-    
-                // If password is provided, add it to the new data array
-    
-                // Update user data
-                $model->save($newData);
-    
-                // Set flash message to indicate successful update
-                session()->setFlashdata('success', 'Successfully Updated');
-    
-                // Redirect user back to dashboard
-                return redirect()->to('dashboard');
-            }
-        }
-    
-        // Retrieve user's data based on session ID
-      
-    
-        // Load views
-        echo view('templates/header', $data);
-        echo view('profile');
-        echo view('templates/footer');
-    }
-      public function update($id)
+    public function update($id)
     {
     $user = new UserModel();
     $data = [
@@ -410,7 +334,7 @@ class Users extends BaseController
     $user->update($id, $data);
     return redirect()->to(base_url("dashboard"))->with("status", " Updated Successfully");
 }
-    
+
     //     if ($this->request->getMethod() == 'post') {
     //         $rules = [
     //             'firstname' => 'required|min_length[3]|max_length[20]',
@@ -508,3 +432,5 @@ class Users extends BaseController
     
 	
 }
+
+

@@ -17,14 +17,17 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <?php if (session()->get('isLoggedIn')): ?>
-                <?php $userId = session()->get('id'); ?>
+            <?php if (session()->get('logged_user') || session()->get('google_user')): ?>
+              
+
+
+
                     <ul class="navbar-nav mr-auto">
                         <li class="nav-item <?= ($uri->getSegment(1) == 'dashboard' ? 'active' : null) ?>">
                             <a class="nav-link" href="<?= base_url('dashboard') ?>">Dashboard</a>
                         </li>
                         <li class="nav-item <?= ($uri->getSegment(1) == 'profile' ? 'active' : null) ?>">
-                        <a class="nav-link" href="<?= base_url('profile/' . $userId) ?>">Profile</a>
+                        <a class="nav-link" href="<?= base_url('profile') ?>">Profile</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav my-2 my-lg-0">

@@ -6,40 +6,30 @@ use App\Models\UserModel;
 
 class Dashboard extends BaseController
 {
-    public function index()
+
+    public $session;
+
+ 
+
+    public function dashboard()
     {
-        // Start the session
-        $session = session();
-
-        // Retrieve the logged-in user ID from the session
-        $loggedInUserId = $session->get('id');
-
-        // Ensure the user is logged in
-        if (!$loggedInUserId) {
-            // Redirect to login page if not logged in
-            return redirect()->to('/login');
+        // Check if user is logged in
+        if (session()->has('logged_user') || session()->has('google_user')) {
+            // Redirect to login page with an error message
+            session()->setFlashdata("Error", "You are not logged in.");
+            return redirect()->to(base_url("/"));
         }
 
-        // Fetch user information from the database
-        $userModel = new UserModel();
-        $userInfo = $userModel->find($loggedInUserId);
+        // Load necessary data for the dashboard
+        $data = [];
 
-        // Check if the user info was retrieved
-        if (!$userInfo) {
-            // Handle the case where the user does not exist
-            return redirect()->to('/login')->with('fail', 'User not found');
-        }
-
-        // Prepare data for the view
-        $data = [
-            'id' => $userInfo['id'],
-            'firstname' => $userInfo['firstname'],
-            'lastname' => $userInfo['lastname'],
-            'email' => $userInfo['email']
-        ];
-
+        // Load header view
         echo view('templates/header', $data);
-		echo view('dashboard');
-		echo view('templates/footer');
+
+        // Load dashboard view
+        echo view('dashboard');
+
+        // Load footer view
+        echo view('templates/footer');
     }
 }

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>login</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
@@ -23,33 +23,32 @@
                             </div>
                         <?php } ?>
                         <div class="card-title">Login</div>
-                        <form action="<?= base_url('/users/login') ?>" method="POST">
+                        <form action="<?= base_url('login')?>" method="POST" >
 
-                            <?= csrf_field(); ?>
-                            <?php if (!empty(session()->getFlashdata('fail'))) : ?>
-                                <div class="alert alert-danger"><?= session()->getFlashdata('fail'); ?></div>
-                            <?php endif ?>
-                            <?php if (!empty(session()->getFlashdata('success'))) : ?>
-                                <div class="alert alert-success"><?= session()->getFlashdata('success'); ?></div>
-                            <?php endif ?>
+                        <?= csrf_field(); ?>
+        <?php if(!empty(session()->getFlashdata('fail'))) : ?>
+        <div class="alert alert-danger"><?= session()->getFlashdata('fail'); ?></div>
+        <?php endif ?>
+        <?php  if(!empty(session()->getFlashdata('success'))) : ?>
+        <div class="alert alert-danger"><?= session()->getFlashdata('success'); ?></div>
+        <?php endif ?>
                             <div class="form-group">
-                                <input type="email" placeholder="Enter email..." class="form-control" name="email" value="<?= set_value('email') ?>" required>
+                                <input type="email" placeholder="enter email.." class="form-control" name="email"  value="<?= set_value('email') ?>" required>
                             </div>
                             <div class="form-group">
-                                <input type="password" placeholder="Enter password..." class="form-control" name="password" value="<?= set_value('password') ?>" required>
+                                <input type="password" placeholder="enter password.." class="form-control" name="password" value="<?= set_value('password') ?>" required>
                             </div>
                             <div class="form-group">
                                 <button class="btn btn-secondary shadow-sm">Login</button>
-                                <a href="<?= base_url('register') ?>">Do not have an account?</a><br>
-                                <a href="<?= base_url('forgotpassword') ?>">Forgot password</a>
+                                <a href="<?= base_url('register')?>">Do not have any account</a><br>
+
+                                <a href="<?= base_url('forgotpassword')?>">Forgot password</a>
+                                <?php 
+					echo $googleButton;
+				?>
+
                             </div>
                         </form>
-
-                        <hr>
-
-                        <div>
-                            <?= isset($googleButton) ? $googleButton : '' ?>
-                        </div>
                     </div>
                 </div>
             </div>

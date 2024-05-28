@@ -9,9 +9,8 @@ use CodeIgniter\HTTP\ResponseInterface;
 use Config\Services;
 // use CodeIgniter\HTTP\ResponseTrait as HTTPResponseTrait;
 
-use Firebase\JWT\Key;
-use Firebase\JWT\JWT;
-class AuthFilter implements FilterInterface
+
+class Auth implements FilterInterface
 {
     
     /**
@@ -31,49 +30,9 @@ class AuthFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
-        $key = env('JWT_SECRET');
-        $header = $request->header('Authorization');
-        $token = null;
-
-        $response = Services::response();
-
-        // print_r($header);
-        // exit();
-   
-        // extract the token from the header
-        if(!empty($header)) {
-            if (preg_match('/Bearer\s(\S+)/', $header, $matches)) {
-                $token = $matches[1];
-            }
-        }
-   
-        // check if token is null or empty
-        if(is_null($token) || empty($token)) {
-
-            $responseData = [
-                'message' => 'Access denied',
-            ];
-            
-            $response->setJSON($responseData);
-            $response->setStatusCode(401);
-           
-            return $response;
-
-            // return $this->respond([
-            //     'message' => 'Access denied',
-            // ], 401);
-        }
-   
-        try {
-            // $decoded = JWT::decode($token, $key, array("HS256"));
-           JWT::decode($token, new Key($key, 'HS256'));
-
-            return $request;
-        } catch (\Exception $ex) {
-            // $response = service('response');
-            $response->setBody('Access denied');
-            $response->setStatusCode(401);
-            return $response;
+       
+        if(! session()->get('isLoggedIn')){
+          return redirect()->to('/');
         }
     }
    
