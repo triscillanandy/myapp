@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 
@@ -16,28 +16,51 @@
                 <div class="card-content">
                     <div class="card-body shadow">
                         <div class="card-title">
-                          
-                                <?php 
-                                $user = null;
-                                if (session()->has('logged_user')) {
-                                    $user = session()->get('logged_user');
-                                } elseif (session()->has('google_user')) {
-                                    $user = session()->get('google_user');
-                                }
-                                ?>
-                                <h1>Welcome, <?= $user['firstname'] ?> <?= $user['lastname'] ?></h1>
-                       
-                           
-
+                            <h1>Welcome, Users</h1>
                         </div>
                         <div class="container">
-                            <!-- Additional content can go here -->
+                            <!-- User details will be dynamically inserted here -->
+                            <div id="userDetails"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var token = localStorage.getItem('token');
+
+            if (token) {
+                $.ajaxSetup({
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+
+                $.ajax({
+                    type: 'GET',
+                    url: '<?= base_url('dashboard') ?>', // Endpoint to fetch user details
+                    success: function(response) {
+                        // Assuming the response is an array of user objects
+                        // Loop through the users and display their details
+                        var userDetailsHtml = '';
+                        $.each(response, function(index, user) {
+                            userDetailsHtml += '<p>' + user.firstname + ' ' + user.lastname + '</p>';
+                        });
+                        $('#userDetails').html(userDetailsHtml);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                    }
+                });
+            } else {
+                window.location.href = '<?= base_url('login') ?>';
+            }
+        });
+    </script>
 </body>
 
 </html>
