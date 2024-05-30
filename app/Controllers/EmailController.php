@@ -2,13 +2,14 @@
 
 use App\Models\UserModel;
 use App\Models\EmailModel;
+use App\Models\Emailattach; // Include the Emailattach model
 use CodeIgniter\API\ResponseTrait;
 
 class EmailController extends BaseController
 {
     use ResponseTrait;
 
-    public function sendEmail($senderId, $recipientEmail, $subject, $body)
+    public function sendEmail($senderId, $recipientEmail, $subject, $body, $attachments = [])
     {
         $emailService = \Config\Services::email();
 
@@ -27,42 +28,58 @@ class EmailController extends BaseController
         $emailService->setSubject($subject);
         $emailService->setMessage($body);
 
+        // Attach files if provided
+        foreach ($attachments as $attachment) {
+            $emailService->attach($attachment->getRealPath(), 'auto', $attachment->getMimeType());
+        }
+
         if ($emailService->send()) {
             // Email sent successfully, save it in the database
             $emailModel = new EmailModel();
-            $emailModel->insert([
+            $emailId = $emailModel->insert([
                 'user_id' => $senderId,
-                'recipient' => $recipientEmail, // Save recipient email directly
+                'recipient' => $recipientEmail,
                 'subject' => $subject,
                 'body' => $body
             ]);
 
+            // Save attachment details using Emailattach model
+            $emailattachModel = new Emailattach();
+            foreach ($attachments as $attachment) {
+                $emailattachModel->insert([
+                    'attach_id' => $emailId,
+                    'file_name' => $attachment->getName(),
+                    'file_path' => $attachment->getRealPath(),
+                    'file_type' => $attachment->getRealPath(),
+                    'file_size' => $attachment->getSizeByUnit(),
+                    'uploaded_at' => date('Y-m-d H:i:s') // Or you can use $attachment->getMTime() if needed
+                ]);
+            }
+
             return $this->respondCreated(['message' => 'Email sent successfully']);
-            //return $this->sendEmail($senderId, $recipientEmail, $subject, $body);
         } else {
             $debugMessage = $emailService->printDebugger(['headers']);
             log_message('error', $debugMessage);
             return $this->respondCreated(['message' => 'Failed to send email: ' . $debugMessage]);
         }
     }
- // Endpoint to receive POST data and call sendEmail
- public function sendEmailFromPost()
- {
-     // Get data from the request
-     $senderId = $this->request->getVar('user_id');
-     $recipientEmail = $this->request->getVar('recipient');
-     $subject = $this->request->getVar('subject');
-     $body = $this->request->getVar('body');
 
-     // Validate the input
-     if (!$senderId || !$recipientEmail || !$subject || !$body) {
-         return $this->failValidationErrors('All fields are required: senderId, recipientEmail, subject, body');
-     }
+    // Endpoint to receive POST data and call sendEmail
+    public function sendEmailFromPost()
+    {
+        // Get data from the request
+        $senderId = $this->request->getVar('user_id');
+        $recipientEmail = $this->request->getVar('recipient');
+        $subject = $this->request->getVar('subject');
+        $body = $this->request->getVar('body');
+        $attachments = $this->request->getFiles(); // Get uploaded files
 
-     // Call sendEmail method with extracted data
-     return $this->sendEmail($senderId, $recipientEmail, $subject, $body);
- }
+        // Validate the input
+        if (!$senderId || !$recipientEmail || !$subject || !$body) {
+            return $this->failValidationErrors('All fields are required: senderId, recipientEmail, subject, body');
+        }
 
+        // Call sendEmail method with extracted data and attachments
+        return $this->sendEmail($senderId, $recipientEmail, $subject, $body, $attachments);
+    }
 }
-// Correct way to call the sendEmail method
-
