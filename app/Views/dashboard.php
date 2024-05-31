@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,7 +7,6 @@
     <title>Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
-
 <body>
     <div class="container">
         <div class="row d-flex align-items-center justify-content-center" style="min-height: 600px;">
@@ -16,51 +14,47 @@
                 <div class="card-content">
                     <div class="card-body shadow">
                         <div class="card-title">
-                            <h1>Welcome, Users</h1>
+                        <?php 
+                            $user_id = session()->get('user_id');
+                            $user_firstname = session()->get('firstname');
+                            $user_lastname = session()->get('lastname');
+                            ?>
+                          
+                          <h1>Welcome, <?= $user_firstname ?> <?= $user_lastname ?> (User ID: <?= $user_id ?>)</h1>
                         </div>
-                        <div class="container">
-                            <!-- User details will be dynamically inserted here -->
-                            <div id="userDetails"></div>
-                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Edit</th>
+                                <th>Delete</th>
+                            </tr>
+                            <?php if (isset($contacts) && !empty($contacts)): ?>
+                                <?php foreach ($contacts as $contact): ?>
+                                    <tr>
+                                        <td><?= $contact['id'] ?></td>
+                                        <td><?= $contact['name'] ?></td>
+                                        <td><?= $contact['email'] ?></td>
+                                        <td><a href="/edit/<?= $contact['id'] ?>" class="btn btn-primary">Edit</a></td>
+                                        <td><a href="/delete/<?= $contact['id'] ?>" class="btn btn-danger">Delete</a></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="text-center">No contacts found</td>
+                                </tr>
+                            <?php endif; ?>
+                        </table>
+                    </div>
+                    <div>
+                        <a href="/logout" class="btn btn-secondary">Logout</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            var token = localStorage.getItem('token');
-
-            if (token) {
-                $.ajaxSetup({
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    }
-                });
-
-                $.ajax({
-                    type: 'GET',
-                    url: '<?= base_url('dashboard') ?>', // Endpoint to fetch user details
-                    success: function(response) {
-                        // Assuming the response is an array of user objects
-                        // Loop through the users and display their details
-                        var userDetailsHtml = '';
-                        $.each(response, function(index, user) {
-                            userDetailsHtml += '<p>' + user.firstname + ' ' + user.lastname + '</p>';
-                        });
-                        $('#userDetails').html(userDetailsHtml);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error(xhr.responseText);
-                    }
-                });
-            } else {
-                window.location.href = '<?= base_url('login') ?>';
-            }
-        });
-    </script>
 </body>
-
 </html>

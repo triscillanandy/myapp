@@ -28,6 +28,10 @@ class UserModel extends Model
     {
         return $this->insert($data);
     }
+    public function getUserByEmail($email)
+    {
+        return $this->where('email', $email)->first();
+    }
 
   
     // namespace App\Models;

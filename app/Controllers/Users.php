@@ -1,17 +1,21 @@
 <?php namespace App\Controllers;
 
 use App\Models\UserModel;
+use App\Models\ContactModel;
 
+use \Firebase\JWT\JWT;
+
+use CodeIgniter\API\ResponseTrait;
 class Users extends BaseController
 {
-    
+    use ResponseTrait;
     //protected $helpers = ['url', 'form'];
     public $userModel = NULL;
     private $googleClient = NULL;
     public $session;
 
     function __construct(){
-        helper(['url', 'form']);
+        helper(['url', 'form','cookie']);
         $this->userModel = new UserModel();
         $this->session = session();
         
@@ -35,8 +39,10 @@ class Users extends BaseController
         return view('login', $data);
     }
 
+
     public function login()
     {
+        $session = session();
         $validation = $this->validate([
             'email' => [
                 'rules' => 'required|valid_email|is_not_unique[users.email]',
@@ -62,24 +68,112 @@ class Users extends BaseController
             $userModel = new UserModel();
     
             $userInfo = $userModel->where('email', $email)->first();
-    
+            if (!$userInfo) {
+                // If user not found, respond with error message
+                return $this->fail('Email not registered');
+            }
+            
             $checkPassword = password_verify($password, $userInfo['password']);
+
             if (!$checkPassword) {
                 session()->setFlashdata('fail', 'Incorrect password');
                 return redirect()->to('login')->withInput();
             } elseif ($userInfo['status'] != 1) {
+                // If user status is not activated, redirect to login with error message
                 session()->setFlashdata('fail', 'Account not activated. Please check your email for activation link.');
                 return redirect()->to('login')->withInput();
             } else {
-                
+                // User is activated, proceed with login
+                // $this->setUserSession($userInfo);
                 session()->set('logged_user', $userInfo);
+                // $session->set('user_id', $userInfo['id']);
+                // $session->set('firstname', $userInfo['firstname']);
                 session()->setFlashdata('success', 'Login success');
-                return redirect()->to('/dashboard')->withInput();
+                return redirect()->to('dashboard')->withInput();
             }
+            
+            // if (!$checkPassword) {
+            //     // If password is incorrect, respond with error message
+            //     return $this->fail('Incorrect password');
+            // }
+        
+            // if ($userInfo['status'] == 0) {
+            //     // If user status is not activated, respond with error message
+            //     return $this->fail('Account not activated. Please check your email for activation link.');
+            // }
+        
+            // if ($userInfo['status'] == 1) {
+               
+                
+            //     return $this->respondCreated([
+            //         'message' => 'Login successful',
+            //         'token' => $token,
+            //         'user' => $userInfo, // Return user data
+            //     ]);
+            // }
         }
     }
+    
 
-    // private function setUserSession($userInfo)
+   
+    public function loginWithGoogle()
+    {
+        if ($this->request->getVar('code')) {
+            $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
+            if (!isset($token['error'])) {
+                $this->googleClient->setAccessToken($token['access_token']);
+                session()->set("AccessToken", $token['access_token']);
+    
+                $googleService = new \Google\Service\Oauth2($this->googleClient);
+                $data = $googleService->userinfo->get();
+                $currentDateTime = date("Y-m-d H:i:s");
+    
+                // Check if the user is already registered
+                $existingUser = $this->userModel->getUserByEmail($data['email']);
+                if ($existingUser) {
+                    // If user already exists, set userdata with existing user's ID
+                    $userdata = [
+                        'id' => $existingUser['id'],
+                        'firstname' => $data['givenName'],
+                        'lastname' => $data['familyName'],
+                        'email' => $data['email'],
+                        'profile_img' => $data['picture'],
+                        'updated_at' => $currentDateTime
+                    ];
+                    $this->userModel->updateUserData($userdata, $data['email']);
+                    $this->setUserSession($userdata);
+                } else {
+                    // If user doesn't exist, insert new user data and retrieve the inserted ID
+                    $userdata = [
+                        'firstname' => $data['givenName'],
+                        'lastname' => $data['familyName'],
+                        'email' => $data['email'],
+                        'profile_img' => $data['picture'],
+                        'created_at' => $currentDateTime
+                    ];
+                    $userId = $this->userModel->insertUserData($userdata);
+                    $this->setUserSession($userdata);
+                }
+                
+                // Set the user ID in session
+                session()->set('google_user', $userdata);
+                // session()->set('user_id', $userdata['id']);
+                // session()->set('firstname', $userdata['firstname']);
+    
+                // Redirect to dashboard
+                return redirect()->to(base_url("/dashboard"));
+            } else {
+                session()->setFlashdata("Error", "Something went wrong");
+                return redirect()->to(base_url());
+            }
+        } else {
+            session()->setFlashdata("Error", "Something went wrong");
+            return redirect()->to(base_url());
+        }
+    }
+    
+    
+    //  private function setUserSession($userInfo)
     // {
     //     $data = [
     //         'id' => $userInfo['id'],
@@ -91,53 +185,7 @@ class Users extends BaseController
 
     //     session()->set($data);
     //     return true;
-    // }
-
-    public function loginWithGoogle()
-    {
-        if ($this->request->getVar('code')) {
-            $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
-            if (!isset($token['error'])) {
-                $this->googleClient->setAccessToken($token['access_token']);
-                session()->set("AccessToken", $token['access_token']);
-
-                $googleService = new \Google\Service\Oauth2($this->googleClient);
-                $data = $googleService->userinfo->get();
-                $currentDateTime = date("Y-m-d H:i:s");
-
-                $userdata = [];
-                if ($this->userModel->isAlreadyRegister($data['email'])) {
-                    $userdata = [
-                        'firstname' => $data['givenName'],
-                        'lastname' => $data['familyName'],
-                        'email' => $data['email'],
-                        'profile_img' => $data['picture'],
-                        'updated_at' => $currentDateTime
-                    ];
-                    $this->userModel->updateUserData($userdata, $data['email']);
-                } else {
-                    $userdata = [
-                        'firstname' => $data['givenName'],
-                        'lastname' => $data['familyName'],
-                        'email' => $data['email'],
-                        'profile_img' => $data['picture'],
-                        'created_at' => $currentDateTime
-                    ];
-                    $this->userModel->insertUserData($userdata);
-                }
-                session()->set("google_user", $userdata);
-                return redirect()->to(base_url("/dashboard"));
-            } else {
-                session()->setFlashdata("Error", "Something went wrong");
-                return redirect()->to(base_url());
-            }
-        } else {
-            session()->setFlashdata("Error", "Something went wrong");
-            return redirect()->to(base_url());
-        }
-    }
-
-    
+    //  }
     public function logout()
     {
         // Remove session for logged_user and google_user
@@ -325,26 +373,35 @@ class Users extends BaseController
     //     echo view('templates/footer');
 
     // }
-
     public function dashboard()
     {
-        if (!$this->session->has("logged_user") && !$this->session->has("google_user")) {
-            // Neither session exists, indicating user is not logged in
-            $this->session->setFlashdata("Error", "You have Logged Out, Please Login Again.");
+        $session = session();
+    
+        // Check if user is logged in
+        if (!$session->has('user_id')) {
+            // User is not logged in
+            $session->setFlashdata("Error", "You have Logged Out, Please Login Again.");
             return redirect()->to(base_url());
         }
-        
-        // At least one session exists, so user is considered logged in
-        echo view('templates/header');
-
-        // Load dashboard view
-        echo view('dashboard');
     
-        // Load footer view
+        // Get the logged-in user's ID and name from the session
+        $userId = $session->get('user_id');
+        $userName = $session->get('firstname') . ' ' . $session->get('lastname');
+    
+        // Retrieve the contacts specific to the logged-in user
+        $contactModel = new ContactModel();
+        $contacts = $contactModel->where('user_id', $userId)->findAll();
+        $data = [
+            'contacts' => $contacts,
+            'user_name' => $userName // Pass user's name to the view
+        ];
+    
+        // Load the dashboard view with user's contacts and name
+        echo view('templates/header');
+        echo view('dashboard', $data);
         echo view('templates/footer');
     }
     
-   
     public function profile() {
         // Check for session variables to ensure user is logged in
 
