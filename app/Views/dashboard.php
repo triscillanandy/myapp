@@ -15,12 +15,12 @@
                     <div class="card-body shadow">
                         <div class="card-title">
                         <?php 
-                            $user_id = session()->get('user_id');
-                            $user_firstname = session()->get('firstname');
-                            $user_lastname = session()->get('lastname');
+                       if (session()->has('logged_user')) {
+                        $user = session()->get('logged_user');
+                       }
                             ?>
-                          
-                          <h1>Welcome, <?= $user_firstname ?> <?= $user_lastname ?> (User ID: <?= $user_id ?>)</h1>
+                          <h1>Welcome, <?= $user['firstname'] ?> <?= $user['lastname'] ?></h1>
+                     
                         </div>
                     </div>
                     <div class="table-responsive">

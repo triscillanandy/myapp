@@ -84,8 +84,9 @@ class Users extends BaseController
                 return redirect()->to('login')->withInput();
             } else {
                 // User is activated, proceed with login
-                // $this->setUserSession($userInfo);
-                session()->set('logged_user', $userInfo);
+                 $this->setUserSession($userInfo);
+               
+                //session()->set('logged_user', $userInfo);
                 // $session->set('user_id', $userInfo['id']);
                 // $session->set('firstname', $userInfo['firstname']);
                 session()->setFlashdata('success', 'Login success');
@@ -151,15 +152,16 @@ class Users extends BaseController
                         'profile_img' => $data['picture'],
                         'created_at' => $currentDateTime
                     ];
-                    $userId = $this->userModel->insertUserData($userdata);
+                    $this->userModel->insertUserData($userdata);
                     $this->setUserSession($userdata);
+                    
                 }
                 
                 // Set the user ID in session
-                session()->set('google_user', $userdata);
+                //session()->set('google_user', $userdata);
                 // session()->set('user_id', $userdata['id']);
                 // session()->set('firstname', $userdata['firstname']);
-    
+               
                 // Redirect to dashboard
                 return redirect()->to(base_url("/dashboard"));
             } else {
@@ -173,19 +175,19 @@ class Users extends BaseController
     }
     
     
-    //  private function setUserSession($userInfo)
-    // {
-    //     $data = [
-    //         'id' => $userInfo['id'],
-    //         'firstname' => $userInfo['firstname'],
-    //         'lastname' => $userInfo['lastname'],
-    //         'email' => $userInfo['email'],
-    //         'isLoggedIn' => true,
-    //     ];
+     private function setUserSession($userInfo)
+    {
+        $data = [
+            'id' => $userInfo['id'],
+            'firstname' => $userInfo['firstname'],
+            'lastname' => $userInfo['lastname'],
+            'email' => $userInfo['email'],
+            'isLoggedIn' => true,
+        ];
 
-    //     session()->set($data);
-    //     return true;
-    //  }
+        session()->set('logged_user',$data);
+        return true;
+     }
     public function logout()
     {
         // Remove session for logged_user and google_user
@@ -375,25 +377,22 @@ class Users extends BaseController
     // }
     public function dashboard()
     {
-        $session = session();
-    
         // Check if user is logged in
-        if (!$session->has('user_id')) {
+        if (!session()->has('logged_user')) {
             // User is not logged in
-            $session->setFlashdata("Error", "You have Logged Out, Please Login Again.");
+            session()->setFlashdata("Error", "You have Logged Out, Please Login Again.");
             return redirect()->to(base_url());
         }
     
-        // Get the logged-in user's ID and name from the session
-        $userId = $session->get('user_id');
-        $userName = $session->get('firstname') . ' ' . $session->get('lastname');
+        // Get the logged-in user's data from the session
+        $user = session()->get('logged_user');
     
         // Retrieve the contacts specific to the logged-in user
         $contactModel = new ContactModel();
-        $contacts = $contactModel->where('user_id', $userId)->findAll();
+        $contacts = $contactModel->where('user_id', $user['id'])->findAll();
         $data = [
             'contacts' => $contacts,
-            'user_name' => $userName // Pass user's name to the view
+            //'user_name' => $user['firstname'] . ' ' . $user['lastname'] // Pass user's name to the view
         ];
     
         // Load the dashboard view with user's contacts and name
@@ -401,6 +400,7 @@ class Users extends BaseController
         echo view('dashboard', $data);
         echo view('templates/footer');
     }
+    
     
     public function profile() {
         // Check for session variables to ensure user is logged in
