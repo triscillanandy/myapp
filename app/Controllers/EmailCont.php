@@ -2,10 +2,9 @@
 
 use App\Models\UserModel;
 use App\Models\EmailModel;
-use App\Models\Emailattach;
+use App\Models\Emailattach; // Include the Emailattach model
 use CodeIgniter\API\ResponseTrait;
 use CodeIgniter\HTTP\Response;
-use CodeIgniter\Files\File;
 
 class EmailController extends BaseController
 {
@@ -14,17 +13,25 @@ class EmailController extends BaseController
     public function __construct()
     {
         helper(['url', 'form']);
+      
     }
 
+    // Inside EmailController class
     public function showEmailForm()
     {
-        return view('email');
+    return view('email');
     }
 
-    public function sendEmail($senderId, $recipientEmail, $subject, $body, $attachments = [])
+    /**
+     * 
+     */
+
+    /** */
+    public function sendEmail($senderId, $recipientEmail, $subject, $body, $attachments = []) 
     {
         $emailService = \Config\Services::email();
 
+        // Retrieve the sender's email using their ID
         $userModel = new UserModel();
         $sender = $userModel->find($senderId);
 
@@ -34,19 +41,24 @@ class EmailController extends BaseController
 
         $senderEmail = $sender['email'];
 
-        $emailService->setFrom($senderEmail, 'Maria');
+        $emailService->setFrom($senderEmail, 'Maria'); // Use sender's email
         $emailService->setTo($recipientEmail);
         $emailService->setSubject($subject);
         $emailService->setMessage($body);
-        $emailService->setReplyTo("no-reply@test.com", "Mcash");
+        $emailService->setReplyTo("no-repy@test.com", "Mcash");
 
-        foreach ($attachments as $attachment) {
-            if ($attachment->isValid() && !$attachment->hasMoved()) {
-                $emailService->attach($attachment->getTempName(), 'inline', $attachment->getName());
-            }
-        }
+    //   // Attach files if provided
+    //     foreach ($attachments as $attachment) {
+    //            // Check if the attachment is valid
+    //         if ($attachment->isValid() && !$attachment->hasMoved()) {
+    //               // Attach the file
+    //             $emailService->attach($attachment->getRealPath(), 'auto', $attachment->getMimeType());
+    //         }
+    //     }
+
 
         if ($emailService->send()) {
+            // Email sent successfully, save it in the database
             $emailModel = new EmailModel();
             $emailId = $emailModel->insert([
                 'user_id' => $senderId,
@@ -55,15 +67,16 @@ class EmailController extends BaseController
                 'body' => $body
             ]);
 
+            // Save attachment details using Emailattach model
             $emailattachModel = new Emailattach();
             foreach ($attachments as $attachment) {
                 $emailattachModel->insert([
                     'attach_id' => $emailId,
                     'file_name' => $attachment->getName(),
-                    'file_path' => $attachment->getTempName(),
-                    'file_type' => $attachment->getMimeType(),
-                    'file_size' => $attachment->getSize(),
-                    'uploaded_at' => date('Y-m-d H:i:s')
+                    'file_path' => $attachment->getRealPath(),
+                    'file_type' => $attachment->getSizeByUnit(),
+                    'file_size' => $attachment->getMimeType(),
+                    'uploaded_at' => date('Y-m-d H:i:s') // Or you can use $attachment->getMTime() if needed
                 ]);
             }
 
@@ -75,46 +88,23 @@ class EmailController extends BaseController
         }
     }
 
+    // Endpoint to receive POST data and call sendEmail
     public function sendEmailFromPost()
     {
+        // Get data from the request
         $senderId = $this->request->getVar('user_id');
         $recipientEmail = $this->request->getVar('recipient');
         $subject = $this->request->getVar('subject'); 
         $body = $this->request->getVar('body');
-        $attachments = $this->request->getFiles()['attachments'] ?? [];
+        $attachments = $this->request->getFiles(); // Get uploaded files
 
+        // Validate the input
         if (!$senderId || !$recipientEmail || !$subject || !$body) {
             return $this->failValidationErrors('All fields are required: senderId, recipientEmail, subject, body');
         }
 
+        // Call sendEmail method with extracted data and attachments
         return $this->sendEmail($senderId, $recipientEmail, $subject, $body, $attachments);
+        
     }
-
-    public function uploadFiles()
-    {
-        $validationRules = [
-            'attachments' => [
-                'label' => 'Attachments',
-                'rules' => 'uploaded[attachments]|max_size[attachments,100000]|ext_in[attachments,png,jpg,jpeg,pdf,doc,docx]'
-            ]
-        ];
-    
-        if (!$this->validate($validationRules)) {
-            $errors = $this->validator->getErrors();
-            return $this->respond(['success' => false, 'errors' => $errors], 400);
-        }
-    
-        $attachments = $this->request->getFiles()['attachments'];
-    
-        foreach ($attachments as $attachment) {
-            if ($attachment->isValid() && !$attachment->hasMoved()) {
-                $attachment->move(WRITEPATH . 'uploads');
-            } else {
-                return $this->respond(['success' => false, 'message' => 'Failed to upload files.'], 400);
-            }
-        }
-    
-        return $this->respond(['success' => true, 'message' => 'Files uploaded successfully.']);
-    }
-    
 }
