@@ -54,7 +54,10 @@ $routes->get('users/activate/(:num)/(:any)', 'Users::activate/$1/$2');
 $routes->get('contacts/create', 'ContactController::create');
 
  $routes->post('contacts/create', 'Contactlist::create');
- $routes->put('contacts/update/(:num)', 'Contactlist::update/$1');
+ $routes->get('contacts/edit/(:num)', 'Contactlist::edit/$1');
+
+ 
+ $routes->post('contacts/update/(:num)', 'Contactlist::update/$1');
  $routes->get('contacts/delete/(:num)', 'Contactlist::delete/$1');
  $routes->delete('contacts/delete/(:num)', 'Contactlist::delete/$1');
 
@@ -84,6 +87,7 @@ $routes->group('email', function ($routes) {
 // File: app/Config/Routes.php
 
 
+$routes->get('emails/sent/', 'EmailController::listSentEmails/');
 
 
 //$routes->get('register', 'UsersController::register');

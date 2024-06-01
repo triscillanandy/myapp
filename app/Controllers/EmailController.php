@@ -6,8 +6,6 @@ use App\Models\UserModel;
 use App\Models\EmailModel;
 use App\Models\Emailattach;
 use CodeIgniter\API\ResponseTrait;
-use CodeIgniter\HTTP\Response;
-use CodeIgniter\Files\File;
 
 class EmailController extends BaseController
 {
@@ -20,7 +18,9 @@ class EmailController extends BaseController
 
     public function showEmailForm()
     {
+
         return view('email');
+       
     }
 
     public function sendEmail($senderId, $recipientEmail, $subject, $body, $attachments = [])
@@ -101,6 +101,29 @@ class EmailController extends BaseController
         return $this->sendEmail($senderId, $recipientEmail, $subject, $body, $attachments);
     }
 
-    // No need for the separate uploadFiles() method
+  
     
+    public function listSentEmails()
+    {
+        // Check if user is logged in
+        if (!session()->has('logged_user')) {
+            // User is not logged in
+            session()->setFlashdata("Error", "You have Logged Out, Please Login Again.");
+            return redirect()->to(base_url());
+        }
+        $user = session()->get('logged_user');
+
+        $emailModel = new EmailModel();
+        $emails = $emailModel->where('user_id',  $user['id'])->findAll();
+        $data = [
+            'emails' =>  $emails,
+            //'user_name' => $user['firstname'] . ' ' . $user['lastname'] // Pass user's name to the view
+        ];
+        echo view('templates/header');
+        echo view('sent_email', $data);
+        echo view('templates/footer');
+
+    }
+
+  
 }

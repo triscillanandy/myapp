@@ -43,7 +43,7 @@
                                                 <td><?= $contact['id'] ?></td>
                                                 <td><?= $contact['name'] ?></td>
                                                 <td><?= $contact['email'] ?></td>
-                                                <td><a href="/edit/<?= $contact['id'] ?>" class="btn btn-primary">Edit</a></td>
+                                                <td><a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-primary">Edit</a></td>
                                                 <td><a href="<?= base_url('contacts/delete/' . $contact['id']) ?>" class="btn btn-danger">Delete</a></td>
 
                                             </tr>

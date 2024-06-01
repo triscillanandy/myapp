@@ -3,7 +3,6 @@
 namespace App\Controllers;
 
 use CodeIgniter\Files\File;
-use CodeIgniter\Email\Email;
 
 class Upload extends BaseController
 {
@@ -23,7 +22,7 @@ class Upload extends BaseController
                     'uploaded[userfile]',
                     'is_image[userfile]',
                     'mime_in[userfile,image/jpg,image/jpeg,image/gif,image/png,image/webp]',
-                    'max_size[userfile,100000000]', // 10MB max
+                    'max_size[userfile,10000]', // 10MB max
                 ],
             ],
         ];
@@ -39,27 +38,12 @@ class Upload extends BaseController
             $newName = $img->getRandomName();
             $img->move(WRITEPATH . 'uploads', $newName);
 
-            // Send email with the uploaded file
-            $this->sendEmailWithAttachment(WRITEPATH . 'uploads/' . $newName);
+            $data = ['uploaded_fileinfo' => new File(WRITEPATH . 'uploads/' . $newName)];
 
             return $this->response->setJSON(['success' => 'File uploaded successfully!']);
         }
 
         return $this->response->setStatusCode(400)
                               ->setJSON(['errors' => 'The file has already been moved.']);
-    }
-
-    protected function sendEmailWithAttachment(string $filePath)
-    {
-        $email = \Config\Services::email();
-
-        $email->setTo('jonestriscillah@gmail.com');
-        $email->setFrom('your@example.com', 'Your Name');
-        $email->setSubject('Uploaded File');
-        $email->setMessage('Please find the uploaded file attached.');
-
-        $email->attach($filePath);
-
-        $email->send();
     }
 }

@@ -14,6 +14,7 @@ class Contactlist extends BaseController
     //     $contacts = $contactModel->where('user_id', $userId)->findAll();
     //     return $this->respond($contacts);
     // }
+    // search peopple by name s email 
 
     // Return a single contact by ID
     // public function show($id = null)
@@ -83,27 +84,42 @@ class Contactlist extends BaseController
         }
     
     }
+
+
+    public function edit($id)
+    {
+        // Fetch the contact data by ID
+        $contactModel = new ContactModel();
+        $contact = $contactModel->find($id);
+        echo view('templates/header');
+   
+      
+        // Pass the contact data to the view
+        return view('edit_contact', ['contact' => $contact]);
+        echo view('templates/footer');
+    }
+
     // Update a contact by ID
-    public function update($id = null)
+    public function update($id)
     {
         $contactModel = new ContactModel();
 
+        // Retrieve the updated data from the form
         $data = [
-            
             'name' => $this->request->getVar('name'),
             'email' => $this->request->getVar('email')
         ];
 
+        // Update the contact data in the database
         if ($contactModel->update($id, $data)) {
-            return $this->respond([
-                'status' => 'success',
-                'message' => 'Contact has been updated.',
-                'data' => $data
-            ]);
+            // Redirect to the contact list page or display a success message
+            return redirect()->to('dashboard')->with('success', 'Contact updated successfully.');
         } else {
-            return $this->fail('Failed to update contact.');
+            // Redirect back to the edit page with an error message
+            return redirect()->back()->withInput()->with('error', 'Failed to update contact.');
         }
     }
+
 
     // Delete a contact by ID
     public function delete($id = null)

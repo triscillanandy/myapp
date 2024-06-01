@@ -20,21 +20,22 @@
             <?php if (session()->get('logged_user') ): ?>
               
 
+                <ul class="navbar-nav mr-auto">
+    <li class="nav-item <?= ($uri->getSegment(1) == 'dashboard' ? 'active' : null) ?>">
+        <a class="nav-link" href="<?= base_url('dashboard') ?>">Dashboard</a>
+    </li>
+    <li class="nav-item <?= ($uri->getSegment(1) == 'profile' ? 'active' : null) ?>">
+        <a class="nav-link" href="<?= base_url('profile') ?>">Profile</a>
+    </li>
+    <li class="nav-item <?= ($uri->getSegment(1) == 'email' ? 'active' : null) ?>">
+        <a class="nav-link" href="<?= base_url('email/form') ?>">Mail</a>
+    </li>
+    <li class="nav-item <?= ($uri->getSegment(1) == 'sent_email' ? 'active' : null) ?>">
+        <a class="nav-link" href="<?= base_url('emails/sent') ?>"> Sent Mail</a>
+    </li>
+ 
+</ul>
 
-
-                    <ul class="navbar-nav mr-auto">
-                        <li class="nav-item <?= ($uri->getSegment(1) == 'dashboard' ? 'active' : null) ?>">
-                            <a class="nav-link" href="<?= base_url('dashboard') ?>">Dashboard</a>
-                        </li>
-                        <li class="nav-item <?= ($uri->getSegment(1) == 'profile' ? 'active' : null) ?>">
-                        <a class="nav-link" href="<?= base_url('profile') ?>">Profile</a>
-                        </li>
-                        <li class="nav-item <?= ($uri->getSegment(1) == 'email' ? 'active' : null) ?>">
-                        <a class="nav-link" href="<?= base_url('email/form') ?>">Mail</a>
-                        <li class="nav-item <?= ($uri->getSegment(1) == 'upload' ? 'active' : null) ?>">
-                        <a class="nav-link" href="<?= base_url('upload') ?>">Mail</a>
-                        </li>
-                    </ul>
                     <ul class="navbar-nav my-2 my-lg-0">
                         <li class="nav-item">
                             <a class="nav-link" href="<?= base_url('logout') ?>">Logout</a>
