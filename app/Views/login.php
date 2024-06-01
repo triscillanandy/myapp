@@ -15,17 +15,31 @@
             <div class="card">
                 <div class="card-content">
                     <div class="card-body shadow">
+                        <?php if (isset($_SESSION['success'])) { ?>
+                            <div class="alert alert-success" role="alert">
+                                <?php echo $_SESSION['success'];
+                                unset($_SESSION['success']);
+                                ?>
+                            </div>
+                        <?php } ?>
                         <div class="card-title">Login</div>
-                        <form id="loginForm" method="POST">
+                        <form action="<?= base_url('/users/login') ?>" method="POST">
 
+                            <?= csrf_field(); ?>
+                            <?php if (!empty(session()->getFlashdata('fail'))) : ?>
+                                <div class="alert alert-danger"><?= session()->getFlashdata('fail'); ?></div>
+                            <?php endif ?>
+                            <?php if (!empty(session()->getFlashdata('success'))) : ?>
+                                <div class="alert alert-success"><?= session()->getFlashdata('success'); ?></div>
+                            <?php endif ?>
                             <div class="form-group">
-                                <input type="email" placeholder="Enter email..." class="form-control" name="email" required>
+                                <input type="email" placeholder="Enter email..." class="form-control" name="email" value="<?= set_value('email') ?>" required>
                             </div>
                             <div class="form-group">
-                                <input type="password" placeholder="Enter password..." class="form-control" name="password" required>
+                                <input type="password" placeholder="Enter password..." class="form-control" name="password" value="<?= set_value('password') ?>" required>
                             </div>
                             <div class="form-group">
-                                <button type="submit" class="btn btn-secondary shadow-sm">Login</button>
+                                <button class="btn btn-secondary shadow-sm">Login</button>
                                 <a href="<?= base_url('register') ?>">Do not have an account?</a><br>
                                 <a href="<?= base_url('forgotpassword') ?>">Forgot password</a>
                             </div>
@@ -34,40 +48,13 @@
                         <hr>
 
                         <div>
-                            <button id="googleLoginButton" class="btn btn-primary">Login with Google</button>
+                            <?= isset($googleButton) ? $googleButton : '' ?>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#loginForm').submit(function(event) {
-                event.preventDefault();
-                var formData = $(this).serialize();
-                $.ajax({
-                    type: 'POST',
-                    url: '<?= base_url('/users/login') ?>',
-                    data: formData,
-                    success: function(response) {
-                        localStorage.setItem('token', response.token);
-                        window.location.href = '<?= base_url('dashboard') ?>';
-                    },
-                    error: function(xhr, status, error) {
-                        alert(xhr.responseText);
-                    }
-                });
-            });
-
-            $('#googleLoginButton').click(function() {
-                // Redirect to Google login page
-             
-            });
-        });
-    </script>
 </body>
 
 </html>

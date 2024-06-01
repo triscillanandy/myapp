@@ -7,34 +7,34 @@ class Contactlist extends BaseController
 {
     use ResponseTrait;
 
-    // Return an array of all contacts
-    public function index($userId) {
-        $contactModel = new ContactModel();
-        // Filter contacts based on user ID (assuming a 'user_id' field in the contacts table)
-        $contacts = $contactModel->where('user_id', $userId)->findAll();
-        return $this->respond($contacts);
-    }
+    // // Return an array of all contacts
+    // public function index($userId) {
+    //     $contactModel = new ContactModel();
+    //     // Filter contacts based on user ID (assuming a 'user_id' field in the contacts table)
+    //     $contacts = $contactModel->where('user_id', $userId)->findAll();
+    //     return $this->respond($contacts);
+    // }
 
     // Return a single contact by ID
-    public function show($id = null)
-    {
-        $contactModel = new ContactModel();
-        $contact = $contactModel->find($id);
+    // public function show($id = null)
+    // {
+    //     $contactModel = new ContactModel();
+    //     $contact = $contactModel->find($id);
 
-        if ($contact) {
-            return $this->respond($contact);
-        } else {
-            return $this->failNotFound('Contact not found');
-        }
-    }
+    //     if ($contact) {
+    //         return $this->respond($contact);
+    //     } else {
+    //         return $this->failNotFound('Contact not found');
+    //     }
+    // }
 
+    
     // Create a new contact
     public function create()
     {
         $model = new ContactModel();
-
+    
         $rules = [
-          
             'name' => [
                 'rules' => 'required|min_length[3]|max_length[20]',
                 'errors' => [
@@ -44,71 +44,76 @@ class Contactlist extends BaseController
                 ]
             ],
             'email' => [
-                'rules' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
+                'rules' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[contacts.email]',
                 'errors' => [
                     'required' => 'Email is required.',
                     'min_length' => 'Email must be at least 6 characters long.',
                     'max_length' => 'Email cannot exceed 50 characters.',
                     'valid_email' => 'Please provide a valid email address.',
-                    'is_unique' => 'Email is already registered.'
+                    'is_unique' => 'Email contact  is already registered.'
                 ]
             ]
         ];
-        
+    
         if ($this->validate($rules)) {
             $newUserData = [
                 'name' => $this->request->getVar('name'),
                 'user_id' => $this->request->getVar('user_id'),
                 'email' => $this->request->getVar('email'),
-               
             ];
-        
+    
             $model->save($newUserData);
-            $userId = $model->getInsertID();
-        
-            return $this->respond(['message' => 'User created successfully.', 'userId' => $userId], 200);
+           // $userId = $model->getInsertID();
+            return redirect()->to('/dashboard');
+            // return $this->response->setJSON([
+            //     'status' => 'success',
+            //     'message' => 'User created successfully.',
+            //     'contact' => [
+            //         'id' => $userId,
+            //         'name' => $newUserData['name'],
+            //         'email' => $newUserData['email']
+            //     ]
+            // ]);
         } else {
-            $response = [
+            return $this->response->setJSON([
+                'status' => 'error',
                 'errors' => $this->validator->getErrors(),
                 'message' => 'Invalid Inputs'
-            ];
-            return $this->fail($response, 409);}
+            ]);
+        }
+    
+    }
+    // Update a contact by ID
+    public function update($id = null)
+    {
+        $contactModel = new ContactModel();
+
+        $data = [
+            
+            'name' => $this->request->getVar('name'),
+            'email' => $this->request->getVar('email')
+        ];
+
+        if ($contactModel->update($id, $data)) {
+            return $this->respond([
+                'status' => 'success',
+                'message' => 'Contact has been updated.',
+                'data' => $data
+            ]);
+        } else {
+            return $this->fail('Failed to update contact.');
+        }
     }
 
-    // // Update a contact by ID
-    // public function update($id = null)
-    // {
-    //     $contactModel = new ContactModel();
+    // Delete a contact by ID
+    public function delete($id = null)
+    {
+        $contactModel = new ContactModel();
 
-    //     $data = [
-            
-    //         'name' => $this->request->getVar('name'),
-    //         'email' => $this->request->getVar('email')
-    //     ];
-
-    //     if ($contactModel->update($id, $data)) {
-    //         return $this->respond([
-    //             'status' => 'success',
-    //             'message' => 'Contact has been updated.',
-    //             'data' => $data
-    //         ]);
-    //     } else {
-    //         return $this->fail('Failed to update contact.');
-    //     }
-    // }
-
-    // // Delete a contact by ID
-    // public function delete($id = null)
-    // {
-    //     $contactModel = new ContactModel();
-
-    //     if ($contactModel->delete($id)) {
-    //         return $this->respondDeleted([
-    //             'status' => 'success',
-    //             'message' => 'Contact has been deleted.'
-    //         ]);
-    //     } else {
-    //         return $this->fail('Failed to delete contact.');
-    //     }
-    // }
+        if ($contactModel->delete($id)) {
+            return redirect()->to('/dashboard');
+        } else {
+            return $this->fail('Failed to delete contact.');
+        }
+    }
 }

@@ -38,7 +38,7 @@ class Filters extends BaseFilters
         'authFilter' => \App\Filters\AuthFilter::class,
         'auth' => \App\Filters\Auth::class,
 		'noauth' => \App\Filters\Noauth::class,
-//'cors' => Cors::class,
+        // 'cors' => Cors::class,
 		
 
         
@@ -80,7 +80,7 @@ class Filters extends BaseFilters
             // 'honeypot',
             // 'csrf',
             // 'invalidchars',
-           // 'cors'
+            // 'cors'
         ],
         'after' => [
             // 'honeypot',

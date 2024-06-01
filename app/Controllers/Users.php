@@ -27,12 +27,14 @@ class Users extends BaseController
         $this->googleClient->addScope("profile");
     }
 
+    // Check if user is logged in
+   
     public function index()
     {
-        if ($this->session->get("logged_user") || $this->session->get("google_user")) {
+        if ($this->session->get("logged_user")) {
             session()->setFlashdata("Error", "You have Already Logged In");
             // User is already logged in, redirect to dashboard or profile page
-            return redirect()->to(base_url("/dashboard"));
+           
         }
 
         $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"><img src="'.base_url('assets/uploads/google.png').'" alt="Login With Google" width="100%"></a>';
@@ -42,7 +44,7 @@ class Users extends BaseController
 
     public function login()
     {
-        $session = session();
+      
         $validation = $this->validate([
             'email' => [
                 'rules' => 'required|valid_email|is_not_unique[users.email]',
@@ -192,59 +194,14 @@ class Users extends BaseController
     {
         // Remove session for logged_user and google_user
         session()->remove('logged_user');
-        session()->remove('google_user');
+       // session()->remove('google_user');
         
         // Redirect to the login page after logout
         return redirect()->to(base_url());
     }
 
 
-    // public function register()
-    // {
-    //     if (! $this->request->is('post')) {
-    //         return view('register');
-    //     }
-        
-    //     // Define validation rules
-    //     $rules = [
-    //         'firstname' => 'required|min_length[3]|max_length[20]',
-    //         'lastname' => 'required|min_length[3]|max_length[20]',
-    //         'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
-    //         'password' => 'required|min_length[8]|max_length[255]',
-    //         'password_confirm' => 'matches[password]',
-    //     ];
-
-    //     // Get POST data
-    //     $data = $this->request->getPost(array_keys($rules));
-
-    //    //validate the data
-
-    //     if (! $this->validateData($data, $rules)) {
-    //         return view('register');
-    //     }
-
-    //     // If you want to get the validated data.
-    //    // $validData = $this->validator->getValidated();
-
-    //     // Save the user to the database
-    //     $userModel = new UserModel();
-
-    //     $newUserData = [
-    //         'firstname' => $this->request->getVar('firstname'),
-    //         'lastname' => $this->request->getVar('lastname'),
-    //         'email' => $this->request->getVar('email'),
-    //         'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT)
-    //     ];
-
-    //     $userModel->save($newUserData);
-
-    //     // Set a success message in session data
-    //     $session = session();
-    //     $session->setFlashdata('success', 'Successful Registration');
-
-    //     // Redirect to the homepage or login page
-    //     return redirect()->to('/login');
-    // }
+    
  public function register()
     {
         if (! $this->request->is('post')) {
@@ -402,6 +359,7 @@ class Users extends BaseController
     }
     
     
+    
     public function profile() {
         // Check for session variables to ensure user is logged in
 
@@ -454,6 +412,9 @@ class Users extends BaseController
         echo view('profile');
         echo view('templates/footer');
     }
+
+
+
       public function update($id)
     {
     $user = new UserModel();

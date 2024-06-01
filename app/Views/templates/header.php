@@ -17,7 +17,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <?php if (session()->get('logged_user') || session()->get('google_user')): ?>
+            <?php if (session()->get('logged_user') ): ?>
               
 
 
@@ -28,6 +28,11 @@
                         </li>
                         <li class="nav-item <?= ($uri->getSegment(1) == 'profile' ? 'active' : null) ?>">
                         <a class="nav-link" href="<?= base_url('profile') ?>">Profile</a>
+                        </li>
+                        <li class="nav-item <?= ($uri->getSegment(1) == 'email' ? 'active' : null) ?>">
+                        <a class="nav-link" href="<?= base_url('email/form') ?>">Mail</a>
+                        <li class="nav-item <?= ($uri->getSegment(1) == 'upload' ? 'active' : null) ?>">
+                        <a class="nav-link" href="<?= base_url('upload') ?>">Mail</a>
                         </li>
                     </ul>
                     <ul class="navbar-nav my-2 my-lg-0">

@@ -1,4 +1,6 @@
-<?php namespace App\Controllers;
+<?php
+
+namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\EmailModel;
@@ -83,38 +85,22 @@ class EmailController extends BaseController
         $body = $this->request->getVar('body');
         $attachments = $this->request->getFiles()['attachments'] ?? [];
 
-        if (!$senderId || !$recipientEmail || !$subject || !$body) {
-            return $this->failValidationErrors('All fields are required: senderId, recipientEmail, subject, body');
-        }
-
-        return $this->sendEmail($senderId, $recipientEmail, $subject, $body, $attachments);
-    }
-
-    public function uploadFiles()
-    {
+        // File upload and validation
         $validationRules = [
             'attachments' => [
                 'label' => 'Attachments',
                 'rules' => 'uploaded[attachments]|max_size[attachments,100000]|ext_in[attachments,png,jpg,jpeg,pdf,doc,docx]'
             ]
         ];
-    
+
         if (!$this->validate($validationRules)) {
             $errors = $this->validator->getErrors();
-            return $this->respond(['success' => false, 'errors' => $errors], 400);
+            return $this->failValidationErrors($errors);
         }
-    
-        $attachments = $this->request->getFiles()['attachments'];
-    
-        foreach ($attachments as $attachment) {
-            if ($attachment->isValid() && !$attachment->hasMoved()) {
-                $attachment->move(WRITEPATH . 'uploads');
-            } else {
-                return $this->respond(['success' => false, 'message' => 'Failed to upload files.'], 400);
-            }
-        }
-    
-        return $this->respond(['success' => true, 'message' => 'Files uploaded successfully.']);
+
+        return $this->sendEmail($senderId, $recipientEmail, $subject, $body, $attachments);
     }
+
+    // No need for the separate uploadFiles() method
     
 }

@@ -29,7 +29,7 @@ class Users extends BaseController
     {
         if (session()->get("LoggedUserData")) {
             session()->setFlashdata("Error", "You have Already Logged In");
-            return redirect()->to(base_url("/profile"));
+            return redirect()->to(base_url("/dashboard"));
         }
         $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'" ><img src="'.base_url('assests/uploads/google.png').'" alt="Login With Google" width="100%"></a>';
         return view('login', $data);

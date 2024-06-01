@@ -10,11 +10,25 @@ class UsersController extends BaseController
 
     
     //protected $helpers = ['url', 'form'];
-  
+   
+     public $userModel = NULL;
+     private $googleClient = NULL;
+     public $session;
+ 
     public function __construct()
     {
         helper(['url', 'form']);
+        $this->userModel = new UserModel();
+        $this->session = session();
+        
+        $this->googleClient = new \Google\Client();
+        $this->googleClient->setAuthConfig('G:/xampp/htdocs/myapp/clients.json');
+        $this->googleClient->setRedirectUri("http://localhost/myapp/public/loginWithGoogle");
+        $this->googleClient->addScope("email");
+        $this->googleClient->addScope("profile");
+        
     }
+    
    
     public function cuth()
     {
@@ -99,99 +113,68 @@ class UsersController extends BaseController
     }
     
 
-    
-	// private function setUserSession($userInfo){
-        
-	// 	$data = [
-	// 		'id' => $userInfo['id'],
-	// 		'firstname' => $userInfo['firstname'],
-	// 		'lastname' => $userInfo['lastname'],
-	// 		'email' => $userInfo['email'],
-	// 		'isLoggedIn' => true,
-	// 	];
 
-	// 	session()->set($data);
-	// 	return true;
-	// }
+    public function loginWithGoogle()
+    {
+        if ($this->request->getVar('code')) {
+            $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
+            if (!isset($token['error'])) {
+                $this->googleClient->setAccessToken($token['access_token']);
+                session()->set("AccessToken", $token['access_token']);
 
-    
-//  use ResponseTrait;
-//  public function register()
-//     {
-//         // if (! $this->request->is('post')) {
-       
-        
-//         // Define validation rules
-//         $rules = [
-//             'firstname' => 'required|min_length[3]|max_length[20]',
-//             'lastname' => 'required|min_length[3]|max_length[20]',
-//             'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
-//             'password' => 'required|min_length[8]|max_length[255]',
-//             'password_confirm' => 'matches[password]',
-//         ];
+                $googleService = new \Google\Service\Oauth2($this->googleClient);
+                $data = $googleService->userinfo->get();
+                $currentDateTime = date("Y-m-d H:i:s");
 
-//         $data = $this->request->getPost(array_keys($rules));
-       
-//         if (! $this->validateData($data, $rules)) {
-//             $response = [
-//                 'message' => $this->validator->getErrors()
-//         ];
-//             }
-    
-//         // // Validate the data
-//         // if (!$rules) {
-//         //     $response = [
-//         //         'message' => $this->validator->getErrors()
-//         // ];
-           
-        
-//         //}
-
-//         // Generate simple random code
-//         $set = '123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-//         $code = substr(str_shuffle($set), 0, 12);
-
-//         // Prepare new user data
-//         $newUserData = [
-//             'firstname' => $this->request->getVar('firstname'),
-//             'lastname' => $this->request->getVar('lastname'),
-//             'email' => $this->request->getVar('email'),
-//             'password' => password_hash($this->request->getVar('password'), PASSWORD_BCRYPT),
-//             'code' => $code,
-//             'status' => 0, // Initially inactive
-//         ];
-
-//         // Save the user to the database
-//         $userModel = new UserModel();
-//         $userModel->save($newUserData);
-//         $userId = $userModel->getInsertID();
-
-//         // Send verification email
-//         $this->sendVerificationEmail($this->request->getVar('email'), $userId, $code);
-//        // return $this->respondCreated('success', 'Successful Registration. Please check your email to activate your account.');
-//         $response = [
+                $userdata = [];
+                if ($this->userModel->isAlreadyRegister($data['email'])) {
+                    $userdata = [
+                        'firstname' => $data['givenName'],
+                        'lastname' => $data['familyName'],
+                        'email' => $data['email'],
+                        'profile_img' => $data['picture'],
+                        'updated_at' => $currentDateTime
+                    ];
+                    $this->userModel->updateUserData($userdata, $data['email']);
+                } else {
+                    $userdata = [
+                        'firstname' => $data['givenName'],
+                        'lastname' => $data['familyName'],
+                        'email' => $data['email'],
+                        'profile_img' => $data['picture'],
+                        'created_at' => $currentDateTime
+                    ];
+                    $this->userModel->insertUserData($userdata);
+                }
+                return $this->respondCreated([
+                    'message' => 'Login successful',
+             
+                    'user' => $userdata
+                ]);
             
-//             'message' => 'Successful Registration. Please check your email to activate your account.'
-//     ];
-//         return $this->respondCreated($response);
-    
-    
-//         // // Set a success message in session data
-//         // $session = session();
-//         // // $session->setFlashdata();
+               
+            } else {
+                return $this->respond([
+                    'message' => 'Login successfulno',
+             
+                   
+                ]);
+            }
+        } else {
+            return $this->respond([
+                'message' => 'Not logged in ',
+         
+               
+            ]);
+        }
+    }
 
-//         // // Redirect to the homepage or login page
-//         // return redirect()->to('/login');
-//     }
-
-
-
-
-
-use ResponseTrait;
-
+ 
     public function register()
-    {   $model = new UserModel();
+    {  
+        
+   
+        $model = new UserModel();
         $rules = [
             'firstname' => [
                 'rules' => 'required|min_length[3]|max_length[20]',
