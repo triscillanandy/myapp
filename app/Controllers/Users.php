@@ -95,25 +95,7 @@ class Users extends BaseController
                 return redirect()->to('dashboard')->withInput();
             }
             
-            // if (!$checkPassword) {
-            //     // If password is incorrect, respond with error message
-            //     return $this->fail('Incorrect password');
-            // }
-        
-            // if ($userInfo['status'] == 0) {
-            //     // If user status is not activated, respond with error message
-            //     return $this->fail('Account not activated. Please check your email for activation link.');
-            // }
-        
-            // if ($userInfo['status'] == 1) {
-               
-                
-            //     return $this->respondCreated([
-            //         'message' => 'Login successful',
-            //         'token' => $token,
-            //         'user' => $userInfo, // Return user data
-            //     ]);
-            // }
+     
         }
     }
     
@@ -210,11 +192,47 @@ class Users extends BaseController
         
         // Define validation rules
         $rules = [
-            'firstname' => 'required|min_length[3]|max_length[20]',
-            'lastname' => 'required|min_length[3]|max_length[20]',
-            'email' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
-            'password' => 'required|min_length[8]|max_length[255]',
-            'password_confirm' => 'matches[password]',
+            'firstname' => [
+                'rules' => 'required|min_length[3]|max_length[20]',
+                'errors' => [
+                    'required' => 'First name is required.',
+                    'min_length' => 'First name must be at least 3 characters long.',
+                    'max_length' => 'First name cannot exceed 20 characters.'
+                ]
+            ],
+            'lastname' => [
+                'rules' => 'required|min_length[3]|max_length[20]',
+                'errors' => [
+                    'required' => 'Last name is required.',
+                    'min_length' => 'Last name must be at least 3 characters long.',
+                    'max_length' => 'Last name cannot exceed 20 characters.'
+                ]
+            ],
+            'email' => [
+                'rules' => 'required|min_length[6]|max_length[50]|valid_email|is_unique[users.email]',
+                'errors' => [
+                    'required' => 'Email is required.',
+                    'min_length' => 'Email must be at least 6 characters long.',
+                    'max_length' => 'Email cannot exceed 50 characters.',
+                    'valid_email' => 'Please provide a valid email address.',
+                    'is_unique' => 'Email is already registered.'
+                ]
+            ],
+            'password' => [
+                'rules' => 'required|min_length[8]|max_length[255]',
+                'errors' => [
+                    'required' => 'Password is required.',
+                    'min_length' => 'Password must be at least 8 characters long.',
+                    'max_length' => 'Password cannot exceed 255 characters.'
+                ]
+            ],
+            'password_confirm' => [
+                'label' => 'confirm password',
+                'rules' => 'matches[password]',
+                'errors' => [
+                    'matches' => 'Passwords do not match.'
+                ]
+            ]
         ];
 
         // Get POST data
@@ -322,14 +340,6 @@ class Users extends BaseController
         return redirect()->to('/login');
     }
 
-    // public function profile($id)
-    // {
-    //     $user = new UserModel();
-    //     // $id = session()->get('id');
-    //     $data['user']=  $user->find($id);
-    //     echo view('templates/header');
-    //     return view('profile',$data);
-    //     echo view('templates/footer');
 
     // }
     public function dashboard()
@@ -429,90 +439,176 @@ class Users extends BaseController
     return redirect()->to(base_url("dashboard"))->with("status", " Updated Successfully");
 }
     
-    //     if ($this->request->getMethod() == 'post') {
-    //         $rules = [
-    //             'firstname' => 'required|min_length[3]|max_length[20]',
-    //             'lastname' => 'required|min_length[3]|max_length[20]',
-    //         ];
-
-    //         if ($this->request->getPost('password') != '') {
-    //             $rules['password'] = 'required|min_length[8]|max_length[255]';
-    //             $rules['password_confirm'] = 'matches[password]';
-    //         }
-
-    //         if (!$this->validate($rules)) {
-    //             return view('profile', [
-    //                 'user' => $user,
-    //                 'validation' => $this->validator
-    //             ]);
-    //         } else {
-    //             $newData = [
-    //                 'id' => $id,
-    //                 'firstname' => $this->request->getPost('firstname'),
-    //                 'lastname' => $this->request->getPost('lastname'),
-    //             ];
-
-    //             if ($this->request->getPost('password') != '') {
-    //                 $newData['password'] =password_hash($this->request->getVar('password'), PASSWORD_BCRYPT);
-    //             }
-
-    //             $model->update($id, $newData);
-    //             session()->setFlashdata('success', 'Successfully Updated');
-    //             return redirect()->to('/profile');
-    //         }
-    //     }
-    //     echo view('templates/header');
-    //     return view('profile', [
-    //         'user' => $user
-    //     ]);
-    //     echo view('templates/footer');
-    // }
-    public function forgotpassword()
-    {
-        if (! $this->request->is('post')) {
-         
-           // return  view('templates/header');
-            return view('forgotpassword');
-            //return view('templates/footer'); // Assuming you have a view for changing password
-        }
-         
-        // Define validation rules
-        $rules = [
-            'old_password' => 'required',
-            'new_password' => 'required|min_length[8]|max_length[255]',
-            'confirm_password' => 'required|matches[new_password]',
-        ];
-    
-        // Get POST data
-        $data = $this->request->getPost(array_keys($rules));
-    
-        // Validate the data
-        if (! $this->validate($rules)) {
-        
-            return view('forgotpassword');
-         
-        }
-    
-        // Check if old password matches with the one in the database
-        $userModel = new UserModel();
-        $user = $userModel->where('email', session()->get('email'))->first();
-    
-        if (!password_verify($data['old_password'], $user['password'])) {
-            // Old password does not match
-            return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
-        }
-    
-        // Update the password
-        $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
-        $userModel->update($user['id'], ['password' => $newPasswordHash]);
-    
-        // Set a success message in session data
-        session()->setFlashdata('success', 'Password updated successfully');
-    
-        // Return the view with the success message
+public function forgotpassword()
+{
+    if (! $this->request->is('post')) {
         return view('forgotpassword');
-        
     }
+
+    // Define validation rules
+    $rules = [
+        'email' => 'required|valid_email',
+    ];
+
+    // Validate the data
+    if (! $this->validate($rules)) {
+        return view('forgotpassword', ['validation' => $this->validator]);
+    }
+
+    $email = $this->request->getVar('email');
+
+    // Check if the email exists in the database
+    $userModel = new UserModel();
+    $user = $userModel->where('email', $email)->first();
+
+    if (!$user) {
+        return redirect()->back()->with('error', 'Email address not found.');
+    }
+
+    // Generate a reset token
+    $token = bin2hex(random_bytes(16));
+    $userModel->update($user['id'], ['reset_token' => $token, 'reset_expires' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
+
+    // Send the reset link via email
+    $this->sendResetEmail($email, $token);
+
+    // Set a success message in session data
+    session()->setFlashdata('success', 'Password reset link has been sent to your email.');
+
+    // Return the view with the success message
+    return view('forgotpassword');
+}
+
+private function sendResetEmail($email, $token)
+{
+    $message = "
+        <html>
+        <head>
+            <title>Password Reset</title>
+        </head>
+        <body>
+            <h2>Password Reset</h2>
+            <p>Please click the link below to reset your password.</p>
+            <h4><a href='".base_url()."users/resetpassword/".$token."'>Reset My Password</a></h4>
+        </body>
+        </html>
+    ";
+
+    $emailService = \Config\Services::email();
+
+    $config['protocol'] = 'smtp';
+    $config['SMTPHost'] = 'smtp.gmail.com';
+    $config['SMTPUser'] = 'uprint332@gmail.com';
+    $config['SMTPPass'] = 'vhklocvwhgyhtydk';
+    $config['SMTPPort'] = 465;
+    $config['mailType'] = 'html'; // Set email format to HTML
+    $config['charset']  = 'utf-8'; // Set charset
+    $config['wordWrap'] = true;
+
+    $emailService->initialize($config);
+
+    $emailService->setFrom('uprint332@gmail.com', 'maria');
+    $emailService->setTo($email);
+    $emailService->setSubject('Password Reset');
+    $emailService->setMessage($message);
+
+    if ($emailService->send()) {
+        session()->setFlashdata('message', 'Password reset link sent to email');
+    } else {
+        $debugMessage = $emailService->printDebugger(['headers']);
+        log_message('error', $debugMessage);
+        session()->setFlashdata('message', 'Failed to send reset email: ' . $debugMessage);
+    }
+}
+
+
+public function resetpassword()
+{
+    if (! $this->request->is('post')) {
+        $token = $this->request->uri->getSegment(3);
+        return view('resetpassword', ['token' => $token]);
+    }
+
+    // Define validation rules
+    $rules = [
+        'new_password' => 'required|min_length[8]|max_length[255]',
+        'confirm_password' => 'required|matches[new_password]',
+        'token' => 'required'
+    ];
+
+    // Validate the data
+    if (! $this->validate($rules)) {
+        return view('resetpassword', ['validation' => $this->validator]);
+    }
+
+    $token = $this->request->getVar('token');
+    $newPassword = $this->request->getVar('new_password');
+
+    // Check if the token is valid
+    $userModel = new UserModel();
+    $user = $userModel->where('reset_token', $token)->where('reset_expires >', date('Y-m-d H:i:s'))->first();
+
+    if (!$user) {
+        return redirect()->back()->with('error', 'Invalid or expired token.');
+    }
+
+    // Update the password
+    $newPasswordHash = password_hash($newPassword, PASSWORD_BCRYPT);
+    $userModel->update($user['id'], ['password' => $newPasswordHash, 'reset_token' => null, 'reset_expires' => null]);
+
+    // Set a success message in session data
+    session()->setFlashdata('success', 'Password updated successfully');
+
+    // Redirect to the login page
+    return redirect()->to('/login');
+}
+
+    // public function forgotpassword()
+    // {
+    //     if (! $this->request->is('post')) {
+         
+    //        // return  view('templates/header');
+    //         return view('forgotpassword');
+    //         //return view('templates/footer'); // Assuming you have a view for changing password
+    //     }
+         
+    //     // Define validation rules
+    //     $rules = [
+    //         'old_password' => 'required',
+    //         'new_password' => 'required|min_length[8]|max_length[255]',
+    //         'confirm_password' => 'required|matches[new_password]',
+    //     ];
+    
+    //     // Get POST data
+    //     $data = $this->request->getPost(array_keys($rules));
+    
+    //     // Validate the data
+    //     if (! $this->validate($rules)) {
+        
+    //         return view('forgotpassword');
+         
+    //     }
+    
+    //     // Check if old password matches with the one in the database
+    //     $userModel = new UserModel();
+    //     $user = $userModel->where('email', session()->get('email'))->first();
+    
+    //     if (!password_verify($data['old_password'], $user['password'])) {
+    //         // Old password does not match
+    //         return redirect()->back()->withInput()->with('error', 'Old password is incorrect');
+    //     }
+    
+    //     // Update the password
+    //     $newPasswordHash = password_hash($data['new_password'], PASSWORD_BCRYPT);
+    //     $userModel->update($user['id'], ['password' => $newPasswordHash]);
+    
+    //     // Set a success message in session data
+    //     session()->setFlashdata('success', 'Password updated successfully');
+    
+    //     // Return the view with the success message
+    //     return view('forgotpassword');
+        
+    // }
     
 
 	

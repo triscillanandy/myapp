@@ -90,6 +90,16 @@ $routes->group('email', function ($routes) {
 $routes->get('emails/sent/', 'EmailController::listSentEmails/');
 
 
+
+// app/Config/Routes.php
+
+$routes->group('passwordreset', function ($routes) {
+    $routes->get('forgot', 'PasswordResetController::forgotPassword');
+    $routes->post('request', 'PasswordResetController::requestReset');
+    $routes->get('reset/(:any)', 'PasswordResetController::resetPassword/$1');
+    $routes->post('update', 'PasswordResetController::updatePassword');
+});
+
 //$routes->get('register', 'UsersController::register');
 
 // $routes->group('', ['filter' => 'cors'], function ($routes) {

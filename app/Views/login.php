@@ -41,7 +41,7 @@
                             <div class="form-group">
                                 <button class="btn btn-secondary shadow-sm">Login</button>
                                 <a href="<?= base_url('register') ?>">Do not have an account?</a><br>
-                                <a href="<?= base_url('forgotpassword') ?>">Forgot password</a>
+                                <a href="<?= base_url('passwordreset/forgot') ?>">Forgot password</a>
                             </div>
                         </form>
 
