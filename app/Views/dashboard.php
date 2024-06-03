@@ -22,14 +22,19 @@
                     <div class="row justify-content-center mb-3">
                         <button class="btn btn-primary" id="addContactBtn">Add Contact</button>
                     </div>
+
                     <div class="card-title">
                         <h1>Welcome, <?= $user['firstname'] ?> <?= $user['lastname'] ?></h1>
+                        <?php if (session()->has('success')): ?>
+                        <div class="alert alert-success">
+                            <?= session('success') ?>
+                        </div>
+                    <?php endif; ?>
                         <!-- Table -->
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Edit</th>
@@ -40,17 +45,15 @@
                                     <?php if (isset($contacts) && !empty($contacts)): ?>
                                         <?php foreach ($contacts as $contact): ?>
                                             <tr>
-                                                <td><?= $contact['id'] ?></td>
                                                 <td><?= $contact['name'] ?></td>
                                                 <td><?= $contact['email'] ?></td>
                                                 <td><a href="<?= base_url('contacts/edit/' . $contact['id']) ?>" class="btn btn-primary">Edit</a></td>
                                                 <td><a href="<?= base_url('contacts/delete/' . $contact['id']) ?>" class="btn btn-danger">Delete</a></td>
-
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="5" class="text-center">No contacts found</td>
+                                            <td colspan="4" class="text-center">No contacts found</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>
@@ -62,7 +65,7 @@
         </div>
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="addContactModal" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" aria-hidden="true">
+    <div class="modal fade show" id="addContactModal" tabindex="-1" role="dialog" aria-labelledby="addContactModalLabel" aria-hidden="true" style="display: <?= session()->has('fail') ? 'block' : 'none' ?>;">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -72,16 +75,24 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Your form goes here -->
-                    <form id="addContactForm" action="<?= base_url('/contacts/create') ?>" method="POST" >
-                    <?= csrf_field(); ?>
+                    <!-- Display Validation Errors -->
+                    <?php if (session()->has('fail')): ?>
+                        <div class="alert alert-danger">
+                            <?php foreach (session('fail') as $field => $error): ?>
+                                <p><?= $error ?></p>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                    <!-- Form -->
+                    <form id="addContactForm" action="<?= base_url('/contacts/create') ?>" method="POST">
+                        <?= csrf_field(); ?>
                         <div class="form-group">
                             <label for="name">Name</label>
-                            <input type="text" class="form-control" id="name" name="name">
+                            <input type="text" class="form-control" id="name" name="name" value="<?= old('name') ?>">
                         </div>
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input type="email" class="form-control" id="email" name="email">
+                            <input type="email" class="form-control" id="email" name="email" value="<?= old('email') ?>">
                         </div>
                         <input type="hidden" name="user_id" value="<?= session()->get('logged_user')['id'] ?>">
                         <button type="submit" class="btn btn-primary">Submit</button>
@@ -92,7 +103,7 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script>
@@ -100,6 +111,8 @@ $(document).ready(function () {
     $('#addContactBtn').click(function () {
         $('#addContactModal').modal('show');
     });
+
+    
 });
 </script>
 
