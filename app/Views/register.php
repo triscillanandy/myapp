@@ -1,64 +1,111 @@
 <!DOCTYPE html>
-<html lang="en">
+<!-- Coding by CodingLab | www.codinglabweb.com-->
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title> Responsive Signup Form </title>
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-</head>
-
-<body>
-    <div class="container">
-        <div class="row d-flex align-items-center justify-content-center" style="min-height: 600px;">
-            <div class="card">
-                <div class="card-content">
-                    <div class="card-body shadow">
-                        <h3>Register</h3>
-                        <hr>
-                        <?= validation_list_errors() ?>
-                        <?php if (isset($_SESSION['success'])) { ?>
-                            <div class="alert alert-success" role="alert">
-                                <?php echo $_SESSION['success'];
-                                unset($_SESSION['success']);
-                                ?>
-                            </div>
-                        <?php } ?>
+        
+             <!-- CSS -->
+        <link rel="stylesheet" type="text/css" href="<?php echo base_url('css/restyle.css'); ?>">
+                
+        <!-- Boxicons CSS -->
+        <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
                         
-                        <form action="<?= base_url('register') ?>" method="post">
+    </head>
+    <body>
+        <section class="container forms">
+          
+
+            <!-- Signup Form -->
+
+            <div class="form signup">
+                <div class="form-content">
+                    <header>Signup</header>
+
+                    <?= validation_list_errors() ?>
+                    <?php if (isset($_SESSION['success'])) { ?>
+                        <div class="alert alert-success" role="alert">
+                            <?php echo $_SESSION['success'];
+                            unset($_SESSION['success']);
+                            ?>
+                        </div>
+                    <?php } ?>
+
+                     <form action="<?= base_url('register') ?>" method="post">
                             <?= csrf_field(); ?>
-                     
-                            <div class="form-group">
-                                <label for="firstname">First Name</label>
-                                <input type="text" class="form-control" name="firstname" id="firstname" value="<?= set_value('firstname') ?>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="lastname">Last Name</label>
-                                <input type="text" class="form-control" name="lastname" id="lastname" value="<?= set_value('lastname') ?>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email address</label>
-                                <input type="email" class="form-control" name="email" id="email" value="<?= set_value('email') ?>" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="password">Password</label>
-                                <input type="password" class="form-control" name="password" id="password" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="password_confirm">Confirm Password</label>
-                                <input type="password" class="form-control" name="password_confirm" id="password_confirm" required>
-                            </div>
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-secondary shadow-sm">Register</button>
-                                <a href="<?= base_url('login') ?>">Already have an account</a>
-                            </div>
-                        </form>
+
+                        <div class="field input-field">
+                           
+                            <input type="text" class="input"  placeholder="Firstname"  name="firstname" value="<?= set_value('firstname') ?>" required>
+                        </div>
+
+                        <div class="field input-field">
+                            
+                            <input type="text" class="input"  placeholder="Lastname" name="lastname"  value="<?= set_value('lastname') ?>" required>
+                        </div>
+                        <div class="field input-field">
+                          
+                            <input type="email" class="input"  placeholder="Email"   name="email"  value="<?= set_value('email') ?>" required>
+                        </div>
+                        <div class="field input-field">
+                            <input type="password" placeholder="Create password" class="password" name="password"  required>
+                        </div>
+
+                        <div class="field input-field">
+                            <input type="password" placeholder="Confirm password" class="password"  name="password_confirm"  required>
+                            <i class='bx bx-hide eye-icon'></i>
+                        </div>
+
+                        <div class="field button-field">
+                            <button type="submit">Signup</button>
+                        </div>
+                    </form>
+
+                    <div class="form-link">
+                        <span>Already have an account? <a href="<?= base_url('login') ?>"  class="link login-link">Login</a></span>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</body>
 
+                <div class="line"></div>
+
+
+             
+                <div class="media-options">
+                            <a href="" class="field google">
+                                <img src="<?php echo base_url('images/google.png'); ?>" alt="" class="google-img">
+                                <span>SignUp with Google</span>
+                            </a>
+                        </div>
+
+            </div>
+        </section>
+
+        <!-- JavaScript -->
+        <script>
+
+      pwShowHide = document.querySelectorAll(".eye-icon"),
+      links = document.querySelectorAll(".link");
+
+pwShowHide.forEach(eyeIcon => {
+    eyeIcon.addEventListener("click", () => {
+        let pwFields = eyeIcon.parentElement.parentElement.querySelectorAll(".password");
+        
+        pwFields.forEach(password => {
+            if(password.type === "password"){
+                password.type = "text";
+                eyeIcon.classList.replace("bx-hide", "bx-show");
+                return;
+            }
+            password.type = "password";
+            eyeIcon.classList.replace("bx-show", "bx-hide");
+        })
+        
+    })
+})      
+    
+        </script>
+    </body>
 </html>

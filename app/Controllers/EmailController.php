@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Controllers;
 
 use App\Models\UserModel;
@@ -18,8 +19,11 @@ class EmailController extends BaseController
 
     public function showEmailForm()
     {
-
+        echo view('templates/header');
         return view('email');
+        echo view('templates/footer');
+
+     
        
     }
 
@@ -69,7 +73,7 @@ class EmailController extends BaseController
                 ]);
             }
 
-            return $this->respondCreated(['message' => 'Email sent successfully']);
+            return redirect()->to('/email/form')->with('success', 'Email sent successfully.');
         } else {
             $debugMessage = $emailService->printDebugger(['headers']);
             log_message('error', $debugMessage);
@@ -79,9 +83,15 @@ class EmailController extends BaseController
 
     public function sendEmailFromPost()
     {
-        $senderId = $this->request->getVar('user_id');
+        if (!session()->has('logged_user')) {
+            return $this->failUnauthorized('You must be logged in to send an email.');
+        }
+
+        $user = session()->get('logged_user');
+        $senderId = $user['id'];
+
         $recipientEmail = $this->request->getVar('recipient');
-        $subject = $this->request->getVar('subject'); 
+        $subject = $this->request->getVar('subject');
         $body = $this->request->getVar('body');
         $attachments = $this->request->getFiles()['attachments'] ?? [];
 
@@ -100,6 +110,7 @@ class EmailController extends BaseController
 
         return $this->sendEmail($senderId, $recipientEmail, $subject, $body, $attachments);
     }
+
 
   
     

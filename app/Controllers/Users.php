@@ -36,9 +36,14 @@ class Users extends BaseController
             // User is already logged in, redirect to dashboard or profile page
            
         }
+        $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"><img src="'.base_url('images/google.png').'" alt="Login With Google" height="20" width="20"></a>';
 
-        $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"><img src="'.base_url('assets/uploads/google.png').'" alt="Login With Google" width="100%"></a>';
-        return view('login', $data);
+        //$data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"><img src="'.base_url('images/google.png').'" alt="Login With Google" width="100%"></a>';
+         //$data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"><img src="'.base_url('assets/uploads/google.png').'" alt="Login With Google" width="100%"></a>';
+         return view('login',$data);
+        // $data['googleButton'] = '<a href="'.$this->googleClient->createAuthUrl().'"</a>';
+       
+      
     }
 
 
@@ -102,7 +107,11 @@ class Users extends BaseController
 
    
     public function loginWithGoogle()
+
+
     {
+        // Get Google Auth URL
+        $googleAuthUrl = $this->googleClient->createAuthUrl();
         if ($this->request->getVar('code')) {
             $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
             if (!isset($token['error'])) {
@@ -140,12 +149,7 @@ class Users extends BaseController
                     $this->setUserSession($userdata);
                     
                 }
-                
-                // Set the user ID in session
-                //session()->set('google_user', $userdata);
-                // session()->set('user_id', $userdata['id']);
-                // session()->set('firstname', $userdata['firstname']);
-               
+       
                 // Redirect to dashboard
                 return redirect()->to(base_url("/dashboard"));
             } else {
@@ -439,129 +443,8 @@ class Users extends BaseController
     return redirect()->to(base_url("dashboard"))->with("status", " Updated Successfully");
 }
     
-public function forgotpassword()
-{
-    if (! $this->request->is('post')) {
-        return view('forgotpassword');
-    }
+  
 
-    // Define validation rules
-    $rules = [
-        'email' => 'required|valid_email',
-    ];
-
-    // Validate the data
-    if (! $this->validate($rules)) {
-        return view('forgotpassword', ['validation' => $this->validator]);
-    }
-
-    $email = $this->request->getVar('email');
-
-    // Check if the email exists in the database
-    $userModel = new UserModel();
-    $user = $userModel->where('email', $email)->first();
-
-    if (!$user) {
-        return redirect()->back()->with('error', 'Email address not found.');
-    }
-
-    // Generate a reset token
-    $token = bin2hex(random_bytes(16));
-    $userModel->update($user['id'], ['reset_token' => $token, 'reset_expires' => date('Y-m-d H:i:s', strtotime('+1 hour'))]);
-
-    // Send the reset link via email
-    $this->sendResetEmail($email, $token);
-
-    // Set a success message in session data
-    session()->setFlashdata('success', 'Password reset link has been sent to your email.');
-
-    // Return the view with the success message
-    return view('forgotpassword');
-}
-
-private function sendResetEmail($email, $token)
-{
-    $message = "
-        <html>
-        <head>
-            <title>Password Reset</title>
-        </head>
-        <body>
-            <h2>Password Reset</h2>
-            <p>Please click the link below to reset your password.</p>
-            <h4><a href='".base_url()."users/resetpassword/".$token."'>Reset My Password</a></h4>
-        </body>
-        </html>
-    ";
-
-    $emailService = \Config\Services::email();
-
-    $config['protocol'] = 'smtp';
-    $config['SMTPHost'] = 'smtp.gmail.com';
-    $config['SMTPUser'] = 'uprint332@gmail.com';
-    $config['SMTPPass'] = 'vhklocvwhgyhtydk';
-    $config['SMTPPort'] = 465;
-    $config['mailType'] = 'html'; // Set email format to HTML
-    $config['charset']  = 'utf-8'; // Set charset
-    $config['wordWrap'] = true;
-
-    $emailService->initialize($config);
-
-    $emailService->setFrom('uprint332@gmail.com', 'maria');
-    $emailService->setTo($email);
-    $emailService->setSubject('Password Reset');
-    $emailService->setMessage($message);
-
-    if ($emailService->send()) {
-        session()->setFlashdata('message', 'Password reset link sent to email');
-    } else {
-        $debugMessage = $emailService->printDebugger(['headers']);
-        log_message('error', $debugMessage);
-        session()->setFlashdata('message', 'Failed to send reset email: ' . $debugMessage);
-    }
-}
-
-
-public function resetpassword()
-{
-    if (! $this->request->is('post')) {
-        $token = $this->request->uri->getSegment(3);
-        return view('resetpassword', ['token' => $token]);
-    }
-
-    // Define validation rules
-    $rules = [
-        'new_password' => 'required|min_length[8]|max_length[255]',
-        'confirm_password' => 'required|matches[new_password]',
-        'token' => 'required'
-    ];
-
-    // Validate the data
-    if (! $this->validate($rules)) {
-        return view('resetpassword', ['validation' => $this->validator]);
-    }
-
-    $token = $this->request->getVar('token');
-    $newPassword = $this->request->getVar('new_password');
-
-    // Check if the token is valid
-    $userModel = new UserModel();
-    $user = $userModel->where('reset_token', $token)->where('reset_expires >', date('Y-m-d H:i:s'))->first();
-
-    if (!$user) {
-        return redirect()->back()->with('error', 'Invalid or expired token.');
-    }
-
-    // Update the password
-    $newPasswordHash = password_hash($newPassword, PASSWORD_BCRYPT);
-    $userModel->update($user['id'], ['password' => $newPasswordHash, 'reset_token' => null, 'reset_expires' => null]);
-
-    // Set a success message in session data
-    session()->setFlashdata('success', 'Password updated successfully');
-
-    // Redirect to the login page
-    return redirect()->to('/login');
-}
 
     // public function forgotpassword()
     // {
