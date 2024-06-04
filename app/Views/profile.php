@@ -11,6 +11,11 @@
 
         <h3><?= $user['firstname'].' '.$user['lastname'] ?></h3>
         <hr>
+        <?php if (session()->has('success')): ?>
+                        <div class="alert alert-success">
+                            <?= session('success') ?>
+                        </div>
+                    <?php endif; ?>
        
         <form class="" action="profile" method="post">
           <div class="row">

@@ -85,6 +85,12 @@ $routes->group('email', function ($routes) {
     $routes->post('send', 'EmailController::sendEmailFromPost');
 });
 // File: app/Config/Routes.php
+// In app/Config/Routes.php
+
+// $routes->get('login', 'Users::index');
+// $routes->post('login', 'Users::login');
+$routes->get('verifyotp', 'Users::verifyOtpPage');
+$routes->post('verifyotp', 'Users::verifyOtp');
 
 
 $routes->get('emails/sent/', 'EmailController::listSentEmails/');

@@ -2,14 +2,14 @@
 
 use App\Models\UserModel;
 use App\Models\ContactModel;
-
+use CodeIgniter\I18n\Time;
 use \Firebase\JWT\JWT;
 
 use CodeIgniter\API\ResponseTrait;
 class Users extends BaseController
 {
     use ResponseTrait;
-    //protected $helpers = ['url', 'form'];
+    protected $helpers = ['url', 'form','date'];
     public $userModel = NULL;
     private $googleClient = NULL;
     public $session;
@@ -25,6 +25,8 @@ class Users extends BaseController
         $this->googleClient->setRedirectUri("http://localhost/myapp/public/loginWithGoogle");
         $this->googleClient->addScope("email");
         $this->googleClient->addScope("profile");
+        date_default_timezone_set('Africa/Nairobi'); // e.g., 'UTC', 'America/New_York'
+
     }
 
     // Check if user is logged in
@@ -47,68 +49,198 @@ class Users extends BaseController
     }
 
 
-    public function login()
-    {
-      
-        $validation = $this->validate([
-            'email' => [
-                'rules' => 'required|valid_email|is_not_unique[users.email]',
-                'errors' => [
-                    'required' => "Email Field Required",
-                    'valid_email' => "Not a valid email",
-                    'is_not_unique' => "Email not registered",
-                ]
-            ],
-            'password' => [
-                'rules' => 'required',
-                'errors' => [
-                    'required' => "Password Field Required"
-                ]
-            ],
-        ]);
-    
-        if (!$validation) {
-            return view('login', ['validation' => $this->validator]);
-        } else {
-            $email = $this->request->getVar('email');
-            $password = $this->request->getVar('password');
-            $userModel = new UserModel();
-    
-            $userInfo = $userModel->where('email', $email)->first();
-            if (!$userInfo) {
-                // If user not found, respond with error message
-                return $this->fail('Email not registered');
-            }
-            
-            $checkPassword = password_verify($password, $userInfo['password']);
+    // In App\Controllers\Users.php
 
-            if (!$checkPassword) {
-                session()->setFlashdata('fail', 'Incorrect password');
-                return redirect()->to('login')->withInput();
-            } elseif ($userInfo['status'] != 1) {
-                // If user status is not activated, redirect to login with error message
-                session()->setFlashdata('fail', 'Account not activated. Please check your email for activation link.');
-                return redirect()->to('login')->withInput();
-            } else {
-                // User is activated, proceed with login
-                 $this->setUserSession($userInfo);
-               
-                //session()->set('logged_user', $userInfo);
-                // $session->set('user_id', $userInfo['id']);
-                // $session->set('firstname', $userInfo['firstname']);
-                session()->setFlashdata('success', 'Login success');
-                return redirect()->to('dashboard')->withInput();
-            }
+private function generateOtp()
+{
+    return rand(100000, 999999); // Generate a 6-digit OTP
+}
+
+private function sendOtp($user, $method = 'email')
+{
+    $otp = $this->generateOtp();
+    $now = new Time('now');
+    $expiresAt = $now->addMinutes(10);
+
+    $this->userModel->update($user['id'], [
+        'otp_code' => $otp,
+        'otp_expires_at' => $expiresAt->toDateTimeString(),
+    ]);
+
+    // Store OTP and expiration time in session
+    $this->session->set('otp_code', $otp);
+    $this->session->set('otp_expires_at', $expiresAt->toDateTimeString());
+
+    if ($method == 'email') {
+        $this->sendEmailOtp($user['email'], $otp);
+    } elseif ($method == 'phone') {
+        return $this->fail('Email not registered');
+    }
+}
+
+
+private function sendEmailOtp($email, $otp)
+{
+    // Use your email service to send the OTP
+    $emailService = \Config\Services::email();
+    $emailService->setFrom('uprint332@gmail.com', 'Maria');
+    $emailService->setTo($email);
+    $emailService->setSubject('Your OTP Code');
+    $emailService->setMessage("Your OTP code is: $otp");
+    $emailService->send();
+}
+
+// private function sendSmsOtp($phone, $otp)
+// {
+//     // Use your SMS service to send the OTP
+//     // Example using a fictional SMS service
+//     $smsService = new SmsService();
+//     $smsService->send($phone, "Your OTP code is: $otp");
+// }
+
+// In App\Controllers\Users.php
+public function verifyOtp()
+{
+    $otp = $this->request->getVar('otp');
+    $user = $this->session->get('logged_user');
+
+    if (!$user || !$otp) {
+        return redirect()->to('login')->with('error', 'Invalid OTP or session expired');
+    }
+
+    $current_time = new Time('now');
+    $otp_expires_at = new Time($user['otp_expires_at']);
+
+    if ($user['otp_code'] == $otp && $otp_expires_at->isAfter($current_time)) {
+        // OTP is correct and not expired
+        $this->userModel->update($user['email'], [
+            'otp_code' => null,
+            'otp_expires_at' => null,
+        ]);
+
+        $this->setUserSession($user);
+        return redirect()->to('dashboard');
+    } else {
+        return redirect()->to('verifyotp')->with('error', 'Invalid or expired OTP');
+    }
+}
+
+
+public function verifyOtpPage()
+{
+    return view('verifyotp'); // Create a view file named verifyOtp.php
+}
+public function login()
+{
+    $validation = $this->validate([
+        'email' => [
+            'rules' => 'required|valid_email|is_not_unique[users.email]',
+            'errors' => [
+                'required' => "Email Field Required",
+                'valid_email' => "Not a valid email",
+                'is_not_unique' => "Email not registered",
+            ]
+        ],
+        'password' => [
+            'rules' => 'required',
+            'errors' => [
+                'required' => "Password Field Required"
+            ]
+        ],
+    ]);
+
+    if (!$validation) {
+        return view('login', ['validation' => $this->validator]);
+    } else {
+        $email = $this->request->getVar('email');
+        $password = $this->request->getVar('password');
+        $userModel = new UserModel();
+
+        $userInfo = $userModel->where('email', $email)->first();
+        if (!$userInfo) {
+            return $this->fail('Email not registered');
+        }
+
+        $checkPassword = password_verify($password, $userInfo['password']);
+
+        if (!$checkPassword) {
+            session()->setFlashdata('fail', 'Incorrect password');
+            return redirect()->to('login')->withInput();
+        } elseif ($userInfo['status'] != 1) {
+            session()->setFlashdata('fail', 'Account not activated. Please check your email for activation link.');
+            return redirect()->to('login')->withInput();
+        } else {
+            // Generate and send OTP
+            $this->sendOtp($userInfo, 'email'); // Assuming email OTP for this example
+            $this->setUserSession($userInfo);
+            // Store user info in session without OTP details
             
-     
+
+            return redirect()->to('verifyotp')->with('info', 'Please enter the OTP sent to your email to proceed.');
         }
     }
+}
+
+
+
+    // public function login()
+    // {
+      
+    //     $validation = $this->validate([
+    //         'email' => [
+    //             'rules' => 'required|valid_email|is_not_unique[users.email]',
+    //             'errors' => [
+    //                 'required' => "Email Field Required",
+    //                 'valid_email' => "Not a valid email",
+    //                 'is_not_unique' => "Email not registered",
+    //             ]
+    //         ],
+    //         'password' => [
+    //             'rules' => 'required',
+    //             'errors' => [
+    //                 'required' => "Password Field Required"
+    //             ]
+    //         ],
+    //     ]);
     
+    //     if (!$validation) {
+    //         return view('login', ['validation' => $this->validator]);
+    //     } else {
+    //         $email = $this->request->getVar('email');
+    //         $password = $this->request->getVar('password');
+    //         $userModel = new UserModel();
+    
+    //         $userInfo = $userModel->where('email', $email)->first();
+    //         if (!$userInfo) {
+    //             // If user not found, respond with error message
+    //             return $this->fail('Email not registered');
+    //         }
+            
+    //         $checkPassword = password_verify($password, $userInfo['password']);
 
-   
+    //         if (!$checkPassword) {
+    //             session()->setFlashdata('fail', 'Incorrect password');
+    //             return redirect()->to('login')->withInput();
+    //         } elseif ($userInfo['status'] != 1) {
+    //             // If user status is not activated, redirect to login with error message
+    //             session()->setFlashdata('fail', 'Account not activated. Please check your email for activation link.');
+    //             return redirect()->to('login')->withInput();
+    //         } else {
+    //             // User is activated, proceed with login
+    //              $this->setUserSession($userInfo);
+               
+    //             //session()->set('logged_user', $userInfo);
+    //             // $session->set('user_id', $userInfo['id']);
+    //             // $session->set('firstname', $userInfo['firstname']);
+    //             session()->setFlashdata('success', 'Login success');
+    //             return redirect()->to('dashboard')->withInput();
+    //         }
+            
+     
+    //     }
+    // }
+    
     public function loginWithGoogle()
-
-
     {
         // Get Google Auth URL
         $googleAuthUrl = $this->googleClient->createAuthUrl();
@@ -126,7 +258,7 @@ class Users extends BaseController
                 $existingUser = $this->userModel->getUserByEmail($data['email']);
                 if ($existingUser) {
                     // If user already exists, set userdata with existing user's ID
-                    $userdata = [
+                    $userInfo = [
                         'id' => $existingUser['id'],
                         'firstname' => $data['givenName'],
                         'lastname' => $data['familyName'],
@@ -134,24 +266,26 @@ class Users extends BaseController
                         'profile_img' => $data['picture'],
                         'updated_at' => $currentDateTime
                     ];
-                    $this->userModel->updateUserData($userdata, $data['email']);
-                    $this->setUserSession($userdata);
+                    $this->userModel->updateUserData($userInfo, $data['email']);
                 } else {
                     // If user doesn't exist, insert new user data and retrieve the inserted ID
-                    $userdata = [
+                    $userInfo = [
+                      
                         'firstname' => $data['givenName'],
                         'lastname' => $data['familyName'],
                         'email' => $data['email'],
                         'profile_img' => $data['picture'],
                         'created_at' => $currentDateTime
                     ];
-                    $this->userModel->insertUserData($userdata);
-                    $this->setUserSession($userdata);
-                    
+                    $userId = $this->userModel->insertUserData($userInfo);
                 }
-       
-                // Redirect to dashboard
-                return redirect()->to(base_url("/dashboard"));
+    
+                // Generate and send OTP for both new and existing users
+                $this->sendOtp($userInfo, 'email'); // Assuming email OTP for this example
+                $this->setUserSession($userInfo);
+    
+                // Redirect to OTP verification page
+                return redirect()->to('verifyotp')->with('info', 'Please enter the OTP sent to your email to proceed.');
             } else {
                 session()->setFlashdata("Error", "Something went wrong");
                 return redirect()->to(base_url());
@@ -162,6 +296,63 @@ class Users extends BaseController
         }
     }
     
+   
+    // public function loginWithGoogle()
+
+
+    // {
+    //     // Get Google Auth URL
+    //     $googleAuthUrl = $this->googleClient->createAuthUrl();
+    //     if ($this->request->getVar('code')) {
+    //         $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
+    //         if (!isset($token['error'])) {
+    //             $this->googleClient->setAccessToken($token['access_token']);
+    //             session()->set("AccessToken", $token['access_token']);
+    
+    //             $googleService = new \Google\Service\Oauth2($this->googleClient);
+    //             $data = $googleService->userinfo->get();
+    //             $currentDateTime = date("Y-m-d H:i:s");
+    
+    //             // Check if the user is already registered
+    //             $existingUser = $this->userModel->getUserByEmail($data['email']);
+    //             if ($existingUser) {
+    //                 // If user already exists, set userdata with existing user's ID
+    //                 $userInfo = [
+    //                     'id' => $existingUser['id'],
+    //                     'firstname' => $data['givenName'],
+    //                     'lastname' => $data['familyName'],
+    //                     'email' => $data['email'],
+    //                     'profile_img' => $data['picture'],
+    //                     'updated_at' => $currentDateTime
+    //                 ];
+    //                 $this->userModel->updateUserData($userInfo, $data['email']);
+    //                 $this->setUserSession($userInfo);
+    //             } else {
+    //                 // If user doesn't exist, insert new user data and retrieve the inserted ID
+    //                 $userInfo = [
+    //                     'firstname' => $data['givenName'],
+    //                     'lastname' => $data['familyName'],
+    //                     'email' => $data['email'],
+    //                     'profile_img' => $data['picture'],
+    //                     'created_at' => $currentDateTime
+    //                 ];
+    //                 $this->userModel->insertUserData($userInfo);
+    //                 $this->setUserSession($userInfo);
+                    
+    //             }
+       
+    //             // Redirect to dashboard
+    //             return redirect()->to(base_url("/dashboard"));
+    //         } else {
+    //             session()->setFlashdata("Error", "Something went wrong");
+    //             return redirect()->to(base_url());
+    //         }
+    //     } else {
+    //         session()->setFlashdata("Error", "Something went wrong");
+    //         return redirect()->to(base_url());
+    //     }
+    // }
+    
     
      private function setUserSession($userInfo)
     {
@@ -170,6 +361,9 @@ class Users extends BaseController
             'firstname' => $userInfo['firstname'],
             'lastname' => $userInfo['lastname'],
             'email' => $userInfo['email'],
+            'otp_code' => $this->session->get('otp_code'), // Retrieve the generated OTP
+            'otp_expires_at' => $this->session->get('otp_expires_at'), // Ret
+            
             'isLoggedIn' => true,
         ];
 

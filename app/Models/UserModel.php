@@ -8,10 +8,10 @@ class UserModel extends Model
 {
     protected $table = 'users';
     protected $primaryKey = 'id';
-    protected $allowedFields = ['firstname', 'lastname', 'email', 'password','profile_img', 'code', 'status'];
+    protected $allowedFields = ['firstname', 'lastname', 'email', 'password','profile_img', 'code', 'status', 'otp_code', 'otp_expires_at', 'two_factor_enabled'];
 
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
+    // protected $createdField  = 'created_at';
+    // protected $updatedField  = 'updated_at';
 
     
     public function isAlreadyRegister($email)
