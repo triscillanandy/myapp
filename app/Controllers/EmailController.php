@@ -27,7 +27,7 @@ class EmailController extends BaseController
        
     }
 
-    public function sendEmail($senderId, $recipientEmail, $subject, $body, $attachments = [])
+    public function sendEmail(int $senderId, string $recipientEmail, string $subject, string $body, array $attachments = [])
     {
         $emailService = \Config\Services::email();
 
@@ -44,7 +44,7 @@ class EmailController extends BaseController
         $emailService->setTo($recipientEmail);
         $emailService->setSubject($subject);
         $emailService->setMessage($body);
-        $emailService->setReplyTo("no-reply@test.com", "Mcash");
+        // $emailService->setReplyTo("no-reply@test.com", "Mcash");
 
         foreach ($attachments as $attachment) {
             if ($attachment->isValid() && !$attachment->hasMoved()) {
@@ -60,17 +60,20 @@ class EmailController extends BaseController
                 'subject' => $subject,
                 'body' => $body
             ]);
-
-            $emailattachModel = new Emailattach();
-            foreach ($attachments as $attachment) {
-                $emailattachModel->insert([
-                    'attach_id' => $emailId,
-                    'file_name' => $attachment->getName(),
-                    'file_path' => $attachment->getTempName(),
-                    'file_type' => $attachment->getMimeType(),
-                    'file_size' => $attachment->getSize(),
-                    'uploaded_at' => date('Y-m-d H:i:s')
-                ]);
+            if (!empty($attachments)) {
+                $emailattachModel = new Emailattach();
+                foreach ($attachments as $attachment) {
+                    if ($attachment->isValid() && !$attachment->hasMoved()) {
+                        $emailattachModel->insert([
+                            'attach_id' => $emailId,
+                            'file_name' => $attachment->getName(),
+                            'file_path' => $attachment->getTempName(),
+                            'file_type' => $attachment->getMimeType(),
+                            'file_size' => $attachment->getSize(),
+                            'uploaded_at' => date('Y-m-d H:i:s')
+                        ]);
+                    }
+                }
             }
 
             return redirect()->to('/email/form')->with('success', 'Email sent successfully.');
@@ -90,18 +93,21 @@ class EmailController extends BaseController
         $user = session()->get('logged_user');
         $senderId = $user['id'];
 
-        $recipientEmail = $this->request->getVar('recipient');
-        $subject = $this->request->getVar('subject');
-        $body = $this->request->getVar('body');
+       
         $attachments = $this->request->getFiles()['attachments'] ?? [];
 
         // File upload and validation
         $validationRules = [
             'attachments' => [
                 'label' => 'Attachments',
-                'rules' => 'uploaded[attachments]|max_size[attachments,100000]|ext_in[attachments,png,jpg,jpeg,pdf,doc,docx]'
+                // 'rules' => 'uploaded[attachments]|max_size[attachments,100000]|ext_in[attachments,png,jpg,jpeg,pdf,doc,docx]'
+                'rules' => 'permit_empty|uploaded[attachments]|max_size[attachments,100000]|ext_in[attachments,png,jpg,jpeg,pdf,doc,docx]'
             ]
         ];
+
+        $recipientEmail = $this->request->getVar('recipient');
+        $subject = $this->request->getVar('subject');
+        $body = $this->request->getVar('body');
 
         if (!$this->validate($validationRules)) {
             $errors = $this->validator->getErrors();

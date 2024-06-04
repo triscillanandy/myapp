@@ -31,6 +31,7 @@
                                         <th>Recipient</th>
                                         <th>Subject</th>
                                         <th>Body</th>
+                                        <th>Date sent</th>
                                       
                                       
                                     </tr>
@@ -43,6 +44,7 @@
                                                 <td><?= $email['recipient'] ?></td>
                                                 <td><?= $email['subject'] ?></td>
                                                 <td><?= $email['body'] ?></td>
+                                                <td><?= $email['sent_at'] ?></td>
                                                
                                             </tr>
                                         <?php endforeach; ?>
