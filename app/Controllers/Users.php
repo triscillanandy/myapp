@@ -58,25 +58,22 @@ private function generateOtp()
 
 private function sendOtp($user, $method = 'email')
 {
-    $otp = $this->generateOtp();
-    $now = new Time('now');
-    $expiresAt = $now->addMinutes(10);
+  $otp = $this->generateOtp();
+  $now = new Time('now');
+  $expiresAt = $now->addMinutes(10);  // Adjust expiration time as needed
 
-    $this->userModel->update($user['id'], [
-        'otp_code' => $otp,
-        'otp_expires_at' => $expiresAt->toDateTimeString(),
-    ]);
+  $this->userModel->update($user['id'], [
+    'otp_code' => $otp,
+    'otp_expires_at' => $expiresAt->toDateTimeString(),
+  ]);
 
-    // Store OTP and expiration time in session
-    $this->session->set('otp_code', $otp);
-    $this->session->set('otp_expires_at', $expiresAt->toDateTimeString());
-
-    if ($method == 'email') {
-        $this->sendEmailOtp($user['email'], $otp);
-    } elseif ($method == 'phone') {
-        return $this->fail('Email not registered');
-    }
+  if ($method == 'email') {
+    $this->sendEmailOtp($user['email'], $otp);
+  } elseif ($method == 'phone') {
+    return $this->fail('Email not registered'); // Or implement phone OTP logic
+  }
 }
+
 
 
 private function sendEmailOtp($email, $otp)
@@ -102,25 +99,33 @@ private function sendEmailOtp($email, $otp)
 public function verifyOtp()
 {
     $otp = $this->request->getVar('otp');
-    $user = $this->session->get('logged_user');
+    $logged_user = $this->session->get('logged_user');
+    $userModel = new UserModel();
 
-    if (!$user || !$otp) {
-        return redirect()->to('login')->with('error', 'Invalid OTP or session expired');
+    // Fetch user data from the database using the email stored in the session
+    $user = $userModel->where('email', $logged_user['email'])->first();
+
+    if (!$user) {
+        return redirect()->to('login')->with('error', 'User not found');
     }
 
+    // Current time
     $current_time = new Time('now');
+    // User's OTP expiration time
     $otp_expires_at = new Time($user['otp_expires_at']);
 
-    if ($user['otp_code'] == $otp && $otp_expires_at->isAfter($current_time)) {
+    // Validate OTP and expiration time
+    if ($user['otp_code'] === $otp && $otp_expires_at->isAfter($current_time)) {
         // OTP is correct and not expired
-        $this->userModel->update($user['email'], [
+        $userModel->update($user['email'], [
             'otp_code' => null,
             'otp_expires_at' => null,
         ]);
 
-        $this->setUserSession($user);
+        $this->setUserSession($user); // Update session to logged in user
         return redirect()->to('dashboard');
     } else {
+        // OTP is invalid or expired
         return redirect()->to('verifyotp')->with('error', 'Invalid or expired OTP');
     }
 }
@@ -267,6 +272,7 @@ public function login()
                         'updated_at' => $currentDateTime
                     ];
                     $this->userModel->updateUserData($userInfo, $data['email']);
+                    $this->setUserSession($userInfo);
                 } else {
                     // If user doesn't exist, insert new user data and retrieve the inserted ID
                     $userInfo = [
@@ -277,12 +283,13 @@ public function login()
                         'profile_img' => $data['picture'],
                         'created_at' => $currentDateTime
                     ];
-                    $userId = $this->userModel->insertUserData($userInfo);
+                    $this->userModel->insertUserData($userInfo);
+                    $this->setUserSession($userInfo);
                 }
     
                 // Generate and send OTP for both new and existing users
                 $this->sendOtp($userInfo, 'email'); // Assuming email OTP for this example
-                $this->setUserSession($userInfo);
+             
     
                 // Redirect to OTP verification page
                 return redirect()->to('verifyotp')->with('info', 'Please enter the OTP sent to your email to proceed.');
@@ -361,8 +368,10 @@ public function login()
             'firstname' => $userInfo['firstname'],
             'lastname' => $userInfo['lastname'],
             'email' => $userInfo['email'],
-            'otp_code' => $this->session->get('otp_code'), // Retrieve the generated OTP
-            'otp_expires_at' => $this->session->get('otp_expires_at'), // Ret
+            // 'otp_code' => $userInfo['otp_code'],
+            // 'otp_expires_at' => $userInfo['otp_expires_at'],
+            // 'otp_code' => $this->session->get('otp_code'), // Retrieve the generated OTP
+            // 'otp_expires_at' => $this->session->get('otp_expires_at'), // Ret
             
             'isLoggedIn' => true,
         ];
