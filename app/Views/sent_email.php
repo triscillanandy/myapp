@@ -6,8 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.8/css/dataTables.dataTables.min.css">
 </head>
 <body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script> 
+<script>
+
+$(document).ready(function () {
+    $('#mydatatable').DataTable();
+    
+    
+});</script> 
+</script> 
+
 <?php 
     if (session()->has('logged_user')) {
         $user = session()->get('logged_user');
@@ -23,8 +36,8 @@
                     <div class="card-title">
                     
                         <!-- Table -->
-                        <div class="table-responsive">
-                            <table class="table table-striped table-bordered">
+                  
+                            <table class="table table-striped table-bordered" id="mydatatable">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -56,12 +69,11 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
+                    
                 </div>
             </div>
         </div>
     </div>
-  
 
 
 </body>

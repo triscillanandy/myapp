@@ -136,7 +136,7 @@ class EmailController extends BaseController
             'emails' =>  $emails,
             //'user_name' => $user['firstname'] . ' ' . $user['lastname'] // Pass user's name to the view
         ];
-        echo view('templates/header');
+       echo view('templates/header');
         echo view('sent_email', $data);
         echo view('templates/footer');
 
