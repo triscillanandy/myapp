@@ -1,6 +1,7 @@
 <?php namespace App\Controllers;
 
 use App\Models\ContactModel;
+use App\Models\UserModel;
 use CodeIgniter\API\ResponseTrait;
 
 class Contactlist extends BaseController
@@ -88,26 +89,70 @@ public function create()
         echo view('templates/footer');
     }
 
-    // Update a contact by ID
+    // // Update a contact by ID
+    // public function update($id)
+    // {
+    //     $contactModel = new ContactModel();
+
+    //     // Retrieve the updated data from the form
+    //     $data = [
+    //         'name' => $this->request->getVar('name'),
+    //         'email' => $this->request->getVar('email')
+    //     ];
+
+    //     // Update the contact data in the database
+    //     if ($contactModel->update($id, $data)) {
+    //         // Redirect to the contact list page or display a success message
+    //         return redirect()->to('dashboard')->with('success', 'Contact updated successfully.');
+    //     } else {
+    //         // Redirect back to the edit page with an error message
+    //         return redirect()->back()->withInput()->with('error', 'Failed to update contact.');
+    //     }
+    // }
+
     public function update($id)
     {
-        $contactModel = new ContactModel();
-
+        // Load the model
+        $userModel = new ContactModel();
+    
+        // Define validation rules
+        $rules = [
+            'name' => 'required|min_length[3]|max_length[255]',
+            'email' => 'required|valid_email|max_length[255]'
+        ];
+    
+        // Validate form input
+        if (!$this->validate($rules)) {
+            // If validation fails, redirect back with validation errors
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+    
         // Retrieve the updated data from the form
         $data = [
-            'name' => $this->request->getVar('name'),
-            'email' => $this->request->getVar('email')
+            'name' => $this->request->getPost('name'),
+            'email' => $this->request->getPost('email')
         ];
-
-        // Update the contact data in the database
-        if ($contactModel->update($id, $data)) {
-            // Redirect to the contact list page or display a success message
-            return redirect()->to('dashboard')->with('success', 'Contact updated successfully.');
+    
+        // Check if the email already exists
+        $userInfo = $userModel->where('email', $data['email'])->first();
+        if ($userInfo && $userInfo['id'] != $id) {
+            // If email exists and it's not the current user's email, return error
+            return redirect()->back()->withInput()->with('error', 'Contact Email already exists');
+        }
+    
+        // Update the user data in the database
+        if ($userModel->update($id, $data)) {
+            // If successful, redirect with success message
+            return redirect()->to('/dashboard')->with('success', 'User updated successfully.');
         } else {
-            // Redirect back to the edit page with an error message
-            return redirect()->back()->withInput()->with('error', 'Failed to update contact.');
+            // If update fails, redirect back with error message
+            return redirect()->back()->withInput()->with('error', 'Failed to update user.');
         }
     }
+    
+              
+  
+  
 
 
     // Delete a contact by ID

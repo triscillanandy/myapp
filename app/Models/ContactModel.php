@@ -16,4 +16,8 @@ class ContactModel extends Model
     // {
     //     return $this->where('user_id', $userId)->findAll();
     // }
+    public function isAlreadyRegister($email)
+    {
+        return $this->where('email', $email)->first();
+    }
 }

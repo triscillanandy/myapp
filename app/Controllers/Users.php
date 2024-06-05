@@ -245,7 +245,12 @@ public function login()
     //     }
     // }
     
+   
+                      
+   
     public function loginWithGoogle()
+
+
     {
         // Get Google Auth URL
         $googleAuthUrl = $this->googleClient->createAuthUrl();
@@ -276,7 +281,6 @@ public function login()
                 } else {
                     // If user doesn't exist, insert new user data and retrieve the inserted ID
                     $userInfo = [
-                      
                         'firstname' => $data['givenName'],
                         'lastname' => $data['familyName'],
                         'email' => $data['email'],
@@ -285,14 +289,11 @@ public function login()
                     ];
                     $this->userModel->insertUserData($userInfo);
                     $this->setUserSession($userInfo);
+                    
                 }
-    
-                // Generate and send OTP for both new and existing users
-                $this->sendOtp($userInfo, 'email'); // Assuming email OTP for this example
-             
-    
-                // Redirect to OTP verification page
-                return redirect()->to('verifyotp')->with('info', 'Please enter the OTP sent to your email to proceed.');
+       
+                // Redirect to dashboard
+                return redirect()->to(base_url("/dashboard"));
             } else {
                 session()->setFlashdata("Error", "Something went wrong");
                 return redirect()->to(base_url());
@@ -302,63 +303,6 @@ public function login()
             return redirect()->to(base_url());
         }
     }
-    
-   
-    // public function loginWithGoogle()
-
-
-    // {
-    //     // Get Google Auth URL
-    //     $googleAuthUrl = $this->googleClient->createAuthUrl();
-    //     if ($this->request->getVar('code')) {
-    //         $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
-    //         if (!isset($token['error'])) {
-    //             $this->googleClient->setAccessToken($token['access_token']);
-    //             session()->set("AccessToken", $token['access_token']);
-    
-    //             $googleService = new \Google\Service\Oauth2($this->googleClient);
-    //             $data = $googleService->userinfo->get();
-    //             $currentDateTime = date("Y-m-d H:i:s");
-    
-    //             // Check if the user is already registered
-    //             $existingUser = $this->userModel->getUserByEmail($data['email']);
-    //             if ($existingUser) {
-    //                 // If user already exists, set userdata with existing user's ID
-    //                 $userInfo = [
-    //                     'id' => $existingUser['id'],
-    //                     'firstname' => $data['givenName'],
-    //                     'lastname' => $data['familyName'],
-    //                     'email' => $data['email'],
-    //                     'profile_img' => $data['picture'],
-    //                     'updated_at' => $currentDateTime
-    //                 ];
-    //                 $this->userModel->updateUserData($userInfo, $data['email']);
-    //                 $this->setUserSession($userInfo);
-    //             } else {
-    //                 // If user doesn't exist, insert new user data and retrieve the inserted ID
-    //                 $userInfo = [
-    //                     'firstname' => $data['givenName'],
-    //                     'lastname' => $data['familyName'],
-    //                     'email' => $data['email'],
-    //                     'profile_img' => $data['picture'],
-    //                     'created_at' => $currentDateTime
-    //                 ];
-    //                 $this->userModel->insertUserData($userInfo);
-    //                 $this->setUserSession($userInfo);
-                    
-    //             }
-       
-    //             // Redirect to dashboard
-    //             return redirect()->to(base_url("/dashboard"));
-    //         } else {
-    //             session()->setFlashdata("Error", "Something went wrong");
-    //             return redirect()->to(base_url());
-    //         }
-    //     } else {
-    //         session()->setFlashdata("Error", "Something went wrong");
-    //         return redirect()->to(base_url());
-    //     }
-    // }
     
     
      private function setUserSession($userInfo)

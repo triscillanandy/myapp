@@ -20,6 +20,15 @@
                     <div class="card-header">Edit Contact</div>
                     <div class="card-body">
                         <form action="<?= base_url('contacts/update/' . $contact['id']) ?>" method="post">
+                        <?= csrf_field(); ?>
+                         <!-- Display Validation Errors -->
+                   
+                         <?php if (session()->has('error')) : ?>
+    <div class="alert alert-danger" role="alert">
+        <?= session()->get('error') ?>
+    </div>
+<?php endif; ?>
+
                             <div class="form-group">
                                 <label for="name">Name</label>
                                 <input type="text" class="form-control" id="name" name="name" value="<?= $contact['name'] ?>">
