@@ -1,16 +1,16 @@
 <?php
 
-//use App\Controllers\Users;
-use App\Controllers\UsersControllers;
+
+use App\Controllers\Tools;
 use CodeIgniter\Router\RouteCollection;
 
 /**
  * @var RouteCollection $routes
  */
-// Default route
+// // Default route
 $routes->get('/', 'Users::index');
 
-// Route to display the login form
+// // Route to display the login form
 $routes->get('/login', 'Users::index');
 
 // // Route to handle traditional login form submission
@@ -31,6 +31,53 @@ $routes->post('profile', 'Users::profile');
 $routes->get('dashboard', 'Dashboard::dashboard', ['filter' => 'authFilter']);
 $routes->get('logout', 'Users::logout');
 $routes->get('users/activate/(:num)/(:any)', 'Users::activate/$1/$2');
+$routes->get('contacts/create', 'ContactController::create');
+
+ $routes->post('contacts/create', 'Contactlist::create');
+ $routes->get('contacts/edit/(:num)', 'Contactlist::edit/$1');
+
+ 
+ $routes->post('contacts/update/(:num)', 'Contactlist::update/$1');
+ $routes->get('contacts/delete/(:num)', 'Contactlist::delete/$1');
+ $routes->delete('contacts/delete/(:num)', 'Contactlist::delete/$1');
+
+
+
+
+
+$routes->group('email', function ($routes) {
+    // Route to display the email form
+    $routes->get('form', 'EmailController::showEmailForm');
+
+    $routes->post('upload', 'EmailController::uploadFiles');
+    // Route to send email
+    $routes->post('send', 'EmailController::sendEmailFromPost');
+});
+
+$routes->get('verifyotp', 'Users::verifyOtpPage');
+$routes->post('verifyotp', 'Users::verifyOtp');
+
+
+$routes->get('emails/sent/', 'EmailController::listSentEmails/');
+
+$routes->group('passwordreset', function ($routes) {
+    $routes->get('forgot', 'PasswordResetController::forgotPassword');
+    $routes->post('request', 'PasswordResetController::requestReset');
+    $routes->get('reset/(:
+    any)', 'PasswordResetController::resetPassword/$1');
+    $routes->post('update', 'PasswordResetController::updatePassword');
+});
+
+
+// app/Config/Routes.php
+
+// $routes->cli('tools/message/(:segment)', 'Tools::message/$1');
+
+// $routes->get('/email/form', 'Email::showEmailForm');
+// $routes->post('/email/enqueueEmails', 'Email::enqueueEmails');
+
+
+
 // $routes->match(['get','post'],'email', 'Email::index');
 
 // $routes->get('/', 'GoogleCon::index');
@@ -51,15 +98,7 @@ $routes->get('users/activate/(:num)/(:any)', 'Users::activate/$1/$2');
 // $routes->get('dashboard', 'Dashboard::index',['filter' => 'authFilter']);
 //  $routes->get('contacts', 'Contactlist::index');
 //  $routes->get('contacts/(:num)', 'Contactlist::show/$1');
-$routes->get('contacts/create', 'ContactController::create');
 
- $routes->post('contacts/create', 'Contactlist::create');
- $routes->get('contacts/edit/(:num)', 'Contactlist::edit/$1');
-
- 
- $routes->post('contacts/update/(:num)', 'Contactlist::update/$1');
- $routes->get('contacts/delete/(:num)', 'Contactlist::delete/$1');
- $routes->delete('contacts/delete/(:num)', 'Contactlist::delete/$1');
 
 //  $routes->get('email/form', 'EmailController::showEmailForm');
 
@@ -69,42 +108,18 @@ $routes->get('contacts/create', 'ContactController::create');
 //  $routes->get('email/send', 'EmailController::sendEmailFromPost');
 //  $routes->post('email/send', 'EmailController::sendEmailFromPost');
 
-$routes->post('email/upload', 'EmailController::uploadFiles');
 
-
-//  $routes->get('upload', 'Upload::index');          // Add this line.
-//  $routes->post('upload/upload', 'Upload::upload'); 
-$routes->group('email', function ($routes) {
-    // Route to display the email form
-    $routes->get('form', 'EmailController::showEmailForm');
-
-    // Route to handle file upload
-
-
-    // Route to send email
-    $routes->post('send', 'EmailController::sendEmailFromPost');
-});
 // File: app/Config/Routes.php
 // In app/Config/Routes.php
 
 // $routes->get('login', 'Users::index');
 // $routes->post('login', 'Users::login');
-$routes->get('verifyotp', 'Users::verifyOtpPage');
-$routes->post('verifyotp', 'Users::verifyOtp');
 
-
-$routes->get('emails/sent/', 'EmailController::listSentEmails/');
 
 
 
 // app/Config/Routes.php
 
-$routes->group('passwordreset', function ($routes) {
-    $routes->get('forgot', 'PasswordResetController::forgotPassword');
-    $routes->post('request', 'PasswordResetController::requestReset');
-    $routes->get('reset/(:any)', 'PasswordResetController::resetPassword/$1');
-    $routes->post('update', 'PasswordResetController::updatePassword');
-});
 
 //$routes->get('register', 'UsersController::register');
 
