@@ -65,7 +65,7 @@ class EmailQueues extends BaseCommand
     {
         $this->db = Database::connect();
         $this->emailQueueModel = new EmailQueueModel();
-        $this->contactModel = new Contact();
+
         $this->email = \Config\Services::email();
     }
 
@@ -76,7 +76,7 @@ class EmailQueues extends BaseCommand
      */
     public function run(array $params)
     {
-        $lockFilePath = WRITEPATH . 'queue.lock';
+        $lockFilePath = WRITEPATH . 'queue.txt';
 
         if (file_exists($lockFilePath)) {
             CLI::write("Queue is already running... bye!!", 'yellow');
@@ -93,20 +93,11 @@ class EmailQueues extends BaseCommand
 
         try {
             // Fetch contacts and enqueue emails if queue.txt does not exist
-            if (!file_exists(WRITEPATH . 'queue.txt')) {
-                $fp = fopen(WRITEPATH . "queue.txt", "w");
+            // if (!file_exists(WRITEPATH . 'queue.txt')) {
+            //     $fp = fopen(WRITEPATH . "queue.txt", "w");
 
-                $contacts = $this->contactModel->findAll();
-                $subject = "JOB APPLICATION";
-                $message = "You are invited for an interview at global study uganda";
-                $attachments = [
-                    WRITEPATH . 'uploads/SENAK POULTRY FARM_1.docx',
-                    WRITEPATH . 'uploads/dashboard.png',
-                ];
+            
 
-                $this->emailQueueModel->enqueueContacts($contacts, $subject, $message, $attachments);
-
-                CLI::write('Contacts have been enqueued.', 'green');
 
                 $limit = $params[0] ?? 10;
                 $emails = $this->emailQueueModel->getBatch('0', $limit);
@@ -138,11 +129,11 @@ class EmailQueues extends BaseCommand
                     }
                 }
 
-                fclose($fp);
-                unlink(WRITEPATH . "queue.txt");
-            } else {
-                CLI::Write("Queue is already running... bye!!", 'yellow');
-            }
+                // fclose($fp);
+                // unlink(WRITEPATH . "queue.txt");
+            // } else {
+            //     CLI::Write("Queue is already running... bye!!", 'yellow');
+            // }
         } finally {
             // Ensure the lock file is deleted
             if (file_exists($lockFilePath)) {
