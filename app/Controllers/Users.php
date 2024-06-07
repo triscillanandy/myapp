@@ -285,6 +285,7 @@ public function login()
                         'lastname' => $data['familyName'],
                         'email' => $data['email'],
                         'profile_img' => $data['picture'],
+                        'status' => 1 ,
                         'created_at' => $currentDateTime
                     ];
                     $this->userModel->insertUserData($userInfo);
