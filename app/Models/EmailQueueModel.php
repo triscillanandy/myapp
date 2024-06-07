@@ -2,6 +2,8 @@
 
 
 
+
+
 namespace App\Models;
 
 use CodeIgniter\Model;
@@ -41,10 +43,10 @@ class EmailQueueModel extends Model
                     ->findAll();
     }
 
-    public function enqueueContacts(array $contacts, string $subject, string $message, array $attachments = []): void
-    {
-        foreach ($contacts as $contact) {
-            $this->enqueue($contact['email'], $subject, $attachments, ['message' => $message]);
-        }
-    }
+    // public function enqueueContacts(array $contacts, string $subject, string $message, array $attachments = []): void
+    // {
+    //     foreach ($contacts as $contact) {
+    //         $this->enqueue($contact['email'], $subject, $attachments, ['message' => $message]);
+    //     }
+    // }
 }

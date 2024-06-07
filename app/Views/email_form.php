@@ -1,25 +1,36 @@
-<!-- email_form.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Form</title>
+    <title>Send Email</title>
 </head>
 <body>
-    <h1>Email Form</h1>
     <?php if (session()->getFlashdata('success')): ?>
-        <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
+        <p><?= esc(session()->getFlashdata('success')) ?></p>
     <?php endif; ?>
 
-    <form action="<?= base_url('/email/enqueueEmails') ?>"  method="post">
-        <label for="subject">Subject:</label><br>
-        <input type="text" id="subject" name="subject"><br>
-
-        <label for="message">Message:</label><br>
-        <textarea id="message" name="message" rows="4" cols="50"></textarea><br>
-
-        <button type="submit">Send Emails</button>
+    <?php if (isset($validation)): ?>
+        <div>
+            <?= $validation->listErrors() ?>
+        </div>
+    <?php endif; ?>
+    
+    <form action="<?= base_url('/send2') ?>" method="post" enctype="multipart/form-data">
+        <?= csrf_field() ?>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" value="<?= set_value('email') ?>" required>
+        <br>
+        <label for="subject">Subject:</label>
+        <input type="text" id="subject" name="subject" value="<?= set_value('subject') ?>" required>
+        <br>
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" required><?= set_value('message') ?></textarea>
+        <br>
+        <label for="attachments">Attachments:</label>
+        <input type="file" id="attachs" name="attachs[]" multiple>
+        <br>
+        <button type="submit">Send Email</button>
     </form>
 </body>
 </html>

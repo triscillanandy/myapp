@@ -92,7 +92,10 @@ $routes->group('passwordreset', function ($routes) {
 
 
 
+$routes->get('/send2', 'Email::send');
 
+
+$routes->post('/send2', 'Email::send');
 
 
 // $routes->get('dashboard', 'Dashboard::index',['filter' => 'authFilter']);
