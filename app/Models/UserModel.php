@@ -12,6 +12,7 @@ class UserModel extends Model
 
     // protected $createdField  = 'created_at';
     // protected $updatedField  = 'updated_at';
+    protected $useSoftDeletes = true;
 
     
     public function isAlreadyRegister($email)

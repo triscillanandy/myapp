@@ -10,6 +10,7 @@ class Emailattach extends Model
     protected $primaryKey = 'id';
     protected $allowedFields = ['attach_id', 'file_name', 'file_path','file_type','file_size'];
     protected $createdField  = 'uploaded_at';
+    protected $useSoftDeletes = true;
 
     // public function getAttachmentsByEmailId($emailId)
     // {

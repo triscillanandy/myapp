@@ -10,6 +10,7 @@ class EmailModel extends Model
     protected $primaryKey = 'id';
     protected $allowedFields = ['user_id','recipient','subject', 'body','sent_at'];
     protected $createdField  = 'sent_at';
+    protected $useSoftDeletes = true;
 
     public function getEmailsByUserId($userId)
     {
