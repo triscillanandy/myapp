@@ -16,6 +16,7 @@ class EmailQueueModel extends Model
     protected $allowedFields = [
         'email', 'subject', 'attachs', 'message', 'sent', 'sent_at', 'attempts', 'created_at'
     ];
+    protected $useSoftDeletes = true;
 
     public function enqueue($to, string $subject, array $attachs, array $data): bool
     {

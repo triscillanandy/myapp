@@ -1,0 +1,78 @@
+{
+    "name": "codeigniter4/tasks",
+    "description": "Task Scheduler for CodeIgniter 4",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "codeigniter",
+        "codeigniter4",
+        "task scheduling",
+        "cron"
+    ],
+    "authors": [
+        {
+            "name": "Lonnie Ezell",
+            "email": "lonnieje@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "homepage": "https://github.com/codeigniter4/tasks",
+    "require": {
+        "php": "^7.4 || ^8.0",
+        "ext-json": "*",
+        "codeigniter4/settings": "^2.0"
+    },
+    "require-dev": {
+        "codeigniter4/devkit": "^1.0",
+        "codeigniter4/framework": "^4.1",
+        "rector/rector": "1.1.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "CodeIgniter\\Tasks\\": "src"
+        },
+        "exclude-from-classmap": [
+            "**/Database/Migrations/**"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Support\\": "tests/_support"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
+    "scripts": {
+        "post-update-cmd": [
+            "bash admin/setup.sh"
+        ],
+        "analyze": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpstan analyze",
+            "psalm",
+            "rector process --dry-run"
+        ],
+        "sa": "@analyze",
+        "ci": [
+            "Composer\\Config::disableProcessTimeout",
+            "@cs",
+            "@deduplicate",
+            "@inspect",
+            "@analyze",
+            "@test"
+        ],
+        "cs": "php-cs-fixer fix --ansi --verbose --dry-run --diff",
+        "cs-fix": "php-cs-fixer fix --ansi --verbose --diff",
+        "style": "@cs-fix",
+        "deduplicate": "phpcpd src/ tests/",
+        "inspect": "deptrac analyze --cache-file=build/deptrac.cache",
+        "mutate": "infection --threads=2 --skip-initial-tests --coverage=build/phpunit",
+        "retool": "retool",
+        "test": "phpunit"
+    }
+}

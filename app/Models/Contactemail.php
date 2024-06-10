@@ -9,6 +9,7 @@ class Contactemail extends Model
     protected $table = 'contactemail';
     protected $primaryKey = 'id';
     protected $allowedFields = ['contactid', 'email_id'];
+    protected $useSoftDeletes = true;
 
 //     public function getEmailsByContactId($contactId)
 //     {

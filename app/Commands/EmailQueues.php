@@ -92,10 +92,7 @@ class EmailQueues extends BaseCommand
         fclose($lockFile);
 
         try {
-            // Fetch contacts and enqueue emails if queue.txt does not exist
-            // if (!file_exists(WRITEPATH . 'queue.txt')) {
-            //     $fp = fopen(WRITEPATH . "queue.txt", "w");
-
+        
             
 
 
@@ -129,13 +126,9 @@ class EmailQueues extends BaseCommand
                     }
                 }
 
-                // fclose($fp);
-                // unlink(WRITEPATH . "queue.txt");
-            // } else {
-            //     CLI::Write("Queue is already running... bye!!", 'yellow');
-            // }
+            
         } finally {
-            // Ensure the lock file is deleted
+            //is  lock file is deleted
             if (file_exists($lockFilePath)) {
                 unlink($lockFilePath);
             }

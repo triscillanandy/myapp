@@ -11,6 +11,7 @@ class ContactModel extends Model
     protected $allowedFields = ['name', 'email','user_id'];
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
+    protected $useSoftDeletes = true;
 
     // public function getContactsByUserId($userId)
     // {
